@@ -10,6 +10,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 import { TransformInterceptor } from './core/transform.interceptor';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { TransformInterceptor } from './core/transform.interceptor';
       }),
       inject: [ConfigService],
     }),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

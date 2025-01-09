@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { comparePasswordHelper } from 'src/utils/utils';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto, UpdateAuthDto } from './dto/create-auth.dto';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class AuthService {
