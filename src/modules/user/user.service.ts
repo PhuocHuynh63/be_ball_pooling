@@ -1,26 +1,68 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from '../../schemas/user.schema';
+import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
+import { UpdateAuthDto } from '../../auth/dto/update-auth.dto'; // Correct import
+import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+
+  async create(createUserDto: CreateAuthDto): Promise<User> {
+    const hashedPassword = await hashPasswordHelper(createUserDto.password);
+    const createdUser = new this.userModel({
+      ...createUserDto,
+      password: hashedPassword,
+      createdAt: new Date(),
+      deletedAt: null,
+    });
+    return createdUser.save();
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(): Promise<User[]> {
+    return this.userModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string): Promise<User> {
+    return this.userModel.findById(id).exec();
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async findByEmail(email: string): Promise<User> {
+    return this.userModel.findOne({ email }).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async handleRegister(registerDto: CreateAuthDto): Promise<User> {
+    const hashedPassword = await hashPasswordHelper(registerDto.password);
+    const createdUser = new this.userModel({
+      ...registerDto,
+      password: hashedPassword,
+      createdAt: new Date(),
+      deletedAt: null,
+    });
+    return createdUser.save();
   }
+
+  async checkActiveCode(id: string): Promise<any> {
+    // Implement your logic here
+  }
+
+  async sendCodeOTP(email: string): Promise<any> {
+    // Implement your logic here
+  }
+
+  async verifyCode(body: { email: string, code: string }): Promise<any> {
+    // Implement your logic here
+  }
+
+  async activeAccount(body: { email: string }): Promise<any> {
+    // Implement your logic here
+  }
+
+  async resetPassword(data: UpdateAuthDto): Promise<any> {
+    // Implement your logic here
+  }
+
+  // Add more methods as needed
 }

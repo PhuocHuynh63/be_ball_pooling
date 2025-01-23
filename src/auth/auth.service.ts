@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { comparePasswordHelper } from 'src/utils/utils';
 import { JwtService } from '@nestjs/jwt';
-import { CreateAuthDto, UpdateAuthDto } from './dto/create-auth.dto';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
+import { UserRole } from 'src/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService
-  ) { }
+  ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
@@ -26,7 +28,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user._id, fullname: user.fullname, role: user.role, image: user.image, };
+    const payload = { email: user.email, sub: user._id, fullname: user.fullname, role: user.role, image: user.image };
     return {
       user: {
         _id: user._id,
@@ -35,43 +37,35 @@ export class AuthService {
         image: user.image,
       },
       access_token: this.jwtService.sign(payload),
-    }
+    };
   }
 
-
-  handleRegister = async (registerDto: CreateAuthDto) => {
+  async handleRegister(registerDto: CreateAuthDto) {
+    if (registerDto.role !== UserRole.USER) {
+      throw new BadRequestException('Only user role can be assigned during registration');
+    }
     return await this.userService.handleRegister(registerDto);
   }
 
-  checkActiveCode = async (id: string) => {
+  async checkActiveCode(id: string) {
     return await this.userService.checkActiveCode(id);
   }
 
-  sendCodeOTP = async (email: string) => {
+  async sendCodeOTP(email: string) {
     return await this.userService.sendCodeOTP(email);
   }
 
-  verifyCode = async (body: { email: string, code: string }) => {
+  async verifyCode(body: { email: string, code: string }) {
     return await this.userService.verifyCode(body);
   }
 
-  activeAccount = async (body: { email: string }) => {
+  async activeAccount(body: { email: string }) {
     return await this.userService.activeAccount(body);
   }
 
-  resetPassword = async (data: UpdateAuthDto) => {
+  async resetPassword(data: UpdateAuthDto) {
     return await this.userService.resetPassword(data);
   }
 
-  // checkCode = async (data: CodeAuthDto) => {
-  //   return await this.userService.handleActive(data);
-  // }
-
-  // retryActive = async (email: string) => {
-  //   return await this.userService.retryActive(email);
-  // }
-
-  // retryPassword = async (email: string) => {
-  //   return await this.userService.retryPassword(email);
-  // }
+  // Add more methods as needed
 }
