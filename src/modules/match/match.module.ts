@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MatchService } from './match.service';
 import { MatchController } from './match.controller';
-import { Match, MatchSchema } from '../../schemas/match.schema';
-import { User, UserSchema } from '../../schemas/user.schema';
-import { PoolTable, PoolTableSchema } from '../../schemas/pooltable.schema';
+import { Match, MatchSchema } from './entities/Match.schema';
+import { User, UserSchema } from '../user/entities/User.schema';
+import { PoolTable, PoolTableSchema } from '../pooltable/entities/PoolTable.schema';
 
 @Module({
   imports: [

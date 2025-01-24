@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from '../../schemas/user.schema';
+import { User } from './entities/User.schema';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 import { UpdateAuthDto } from '../../auth/dto/update-auth.dto'; // Correct import
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) public userModel: Model<User>) {}
 
   async create(createUserDto: CreateAuthDto): Promise<User> {
     const hashedPassword = await hashPasswordHelper(createUserDto.password);
@@ -30,7 +30,10 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    return this.userModel.findOne({ email }).exec();
+    console.log('UserService: findByEmail: email:', email); // Debugging statement
+    const user = await this.userModel.findOne({ email: email }).exec();
+    console.log('UserService: findByEmail: user:', user); // Debugging statement
+    return user;
   }
 
   async handleRegister(registerDto: CreateAuthDto): Promise<User> {

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from './user.schema';
-import { PoolTable } from './PoolTable.schema';
+import { User } from '../../user/entities/User.schema';
+import { PoolTable } from '../../pooltable/entities/PoolTable.schema';
 
 @Schema()
 export class Match extends Document {

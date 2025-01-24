@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { comparePasswordHelper } from 'src/utils/utils';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { comparePasswordHelper, hashPasswordHelper } from 'src/utils/utils';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { UserRole } from 'src/schemas/user.schema';
+import { UserRole } from '@modules/user/entities/User.schema';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +14,9 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
+    console.log('AuthService: validateUser: email:', email); // Debugging statement
     const user = await this.userService.findByEmail(email);
+    console.log('AuthService: validateUser: user:', user); // Debugging statement
     if (!user) {
       return null;
     }
@@ -44,7 +46,14 @@ export class AuthService {
     if (registerDto.role !== UserRole.USER) {
       throw new BadRequestException('Only user role can be assigned during registration');
     }
-    return await this.userService.handleRegister(registerDto);
+    const hashedPassword = await hashPasswordHelper(registerDto.password);
+    const createdUser = new this.userService.userModel({
+      ...registerDto,
+      password: hashedPassword,
+      createdAt: new Date(),
+      deletedAt: null,
+    });
+    return createdUser.save();
   }
 
   async checkActiveCode(id: string) {

@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PoolTableService } from './pooltable.service';
 import { PoolTableController } from './pooltable.controller';
-import { PoolTable, PoolTableSchema } from '../../schemas/pooltable.schema';
-import { Store, StoreSchema } from '../../schemas/store.schema';
+import { PoolTable, PoolTableSchema } from './entities/PoolTable.schema';
+import { Store, StoreSchema } from '../store/entities/Store.schema';
 import { AuthModule } from 'src/auth/auth.module'; 
 
 @Module({

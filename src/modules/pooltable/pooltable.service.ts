@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PoolTable } from '../../schemas/pooltable.schema';
+import { PoolTable } from './entities/PoolTable.schema';
 
 @Injectable()
 export class PoolTableService {

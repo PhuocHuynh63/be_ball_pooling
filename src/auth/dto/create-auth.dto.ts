@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
-import { UserRole } from '../../schemas/user.schema';
+import { UserRole } from '../../modules/user/entities/User.schema';
 
 export class CreateAuthDto {
   @IsNotEmpty({ message: 'Name is required' })
