@@ -64,6 +64,7 @@ import { AuthModule } from './auth/auth.module';
     StoreModule,
     MatchModule,
     AuthModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [

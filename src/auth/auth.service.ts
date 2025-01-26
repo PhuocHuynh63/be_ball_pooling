@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { comparePasswordHelper, hashPasswordHelper } from 'src/utils/utils';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -53,7 +53,14 @@ export class AuthService {
       createdAt: new Date(),
       deletedAt: null,
     });
-    return createdUser.save();
+    try {
+      return await createdUser.save();
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error code
+        throw new ConflictException('Email already exists');
+      }
+      throw error;
+    }
   }
 
   async checkActiveCode(id: string) {

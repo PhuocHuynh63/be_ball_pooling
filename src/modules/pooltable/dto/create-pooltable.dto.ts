@@ -3,18 +3,18 @@ import { IsNotEmpty, IsString, IsArray } from 'class-validator';
 export class CreatePoolTableDto {
   @IsNotEmpty()
   @IsString()
-  qrCode: string;
+  readonly qrCode: string;
 
   @IsNotEmpty()
   @IsString()
-  status: string;
+  readonly status: string;
 
   @IsNotEmpty()
-  tableType: {
+  readonly tableType: {
     type_name: string;
     compatible_mode: string[];
   };
 
   @IsNotEmpty()
-  store: string; // Store ID
+  readonly store: string; // Store ID
 }
