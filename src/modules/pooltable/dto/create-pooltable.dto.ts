@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsArray } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, IsMongoId } from 'class-validator';
 
 export class CreatePoolTableDto {
   @IsNotEmpty()
@@ -16,5 +16,6 @@ export class CreatePoolTableDto {
   };
 
   @IsNotEmpty()
+  @IsMongoId()
   readonly store: string; // Store ID
 }

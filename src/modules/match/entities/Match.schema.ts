@@ -5,19 +5,19 @@ import { PoolTable } from '../../pooltable/entities/PoolTable.schema';
 
 @Schema()
 export class Match extends Document {
-    @Prop({
-        type: [
-          {
-            user: { type: Types.ObjectId, ref: 'User' },
-            team: String,
-          },
-        ],
-        required: true,
-      })
-      users: {
-        user: Types.ObjectId;
-        team: string;
-      }[];
+  @Prop({
+    type: [
+      {
+        user: { type: Types.ObjectId, ref: 'User' },
+        team: { type: String, required: false },
+      },
+    ],
+    required: true,
+  })
+  users: {
+    user: Types.ObjectId;
+    team?: string;
+  }[];
 
   @Prop({ required: true })
   status: string;
@@ -30,16 +30,17 @@ export class Match extends Document {
       {
         _id: Number,
         player: { type: Types.ObjectId, ref: 'User' },
-        score: [Number],
-        status: String,
+        ballsPotted: [String], // Store the balls potted in each stroke
+        foul: Boolean, // Indicate if the stroke was a foul
       },
     ],
+    default: [],
   })
   progress: {
     _id: number;
     player: Types.ObjectId;
-    score: number[];
-    status: string;
+    ballsPotted: string[];
+    foul: boolean;
   }[];
 
   @Prop({
@@ -49,6 +50,7 @@ export class Match extends Document {
       createdAt: Date,
       updatedAt: Date,
     },
+    required: false,
   })
   result: {
     name: string;
@@ -57,8 +59,8 @@ export class Match extends Document {
     updatedAt: Date;
   };
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'PoolTable' }] })
-  pooltable: Types.ObjectId[];
+  @Prop({ type: Types.ObjectId, ref: 'PoolTable', required: true })
+  pooltable: Types.ObjectId;
 
   @Prop({ default: Date.now })
   createdAt: Date;
@@ -68,6 +70,9 @@ export class Match extends Document {
 
   @Prop({ default: Date.now })
   updatedAt: Date;
+
+  @Prop({ default: null })
+  deletedAt: Date;
 }
 
 export const MatchSchema = SchemaFactory.createForClass(Match);

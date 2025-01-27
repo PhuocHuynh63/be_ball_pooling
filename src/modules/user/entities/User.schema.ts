@@ -17,7 +17,7 @@ export class User extends Document {
   @Prop({ required: false })
   avatar: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   phone: string;
 
   @Prop({ required: true })
