@@ -7,10 +7,6 @@ export class CreateStoreDto {
 
   @IsNotEmpty()
   @IsString()
-  readonly location: string;
-
-  @IsNotEmpty()
-  @IsString()
   readonly status: string;
 
   @IsNotEmpty()

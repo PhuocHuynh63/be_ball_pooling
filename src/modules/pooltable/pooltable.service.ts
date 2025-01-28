@@ -1,31 +1,26 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PoolTable } from './entities/PoolTable.schema';
 import { CreatePoolTableDto } from './dto/create-pooltable.dto';
 import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
-import { StoreService } from '../store/store.service';
 
 @Injectable()
 export class PoolTableService {
   constructor(
-    @InjectModel(PoolTable.name) private poolTableModel: Model<PoolTable>,
-    private readonly storeService: StoreService,
+    @InjectModel(PoolTable.name) private readonly poolTableModel: Model<PoolTable>
   ) {}
 
   async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
-    const existingPoolTable = await this.poolTableModel.findOne({ qrCode: createPoolTableDto.qrCode }).exec();
-    if (existingPoolTable) {
-      throw new BadRequestException('QR code already exists');
+    try {
+      const createdPoolTable = new this.poolTableModel(createPoolTableDto);
+      return await createdPoolTable.save();
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error code
+        throw new ConflictException('QR code already exists');
+      }
+      throw error;
     }
-
-    const store = await this.storeService.findOne(createPoolTableDto.store);
-    if (!store) {
-      throw new BadRequestException('Store does not exist');
-    }
-
-    const createdPoolTable = new this.poolTableModel(createPoolTableDto);
-    return createdPoolTable.save();
   }
 
   async findAll(): Promise<PoolTable[]> {
@@ -57,6 +52,7 @@ export class PoolTableService {
     }
 
     poolTable.deletedAt = new Date();
+    poolTable.status = 'unavailable';
     return poolTable.save();
   }
 }

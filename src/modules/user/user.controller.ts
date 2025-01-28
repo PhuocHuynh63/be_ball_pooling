@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 
@@ -21,5 +21,8 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  // Add more endpoints as needed
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.userService.delete(id);
+  }
 }

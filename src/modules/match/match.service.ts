@@ -79,6 +79,7 @@ export class MatchService {
       throw new NotFoundException('Match not found');
     }
 
+    match.status = 'deleted'; // Set status to deleted for soft deletion
     match.deletedAt = new Date();
     return match.save();
   }

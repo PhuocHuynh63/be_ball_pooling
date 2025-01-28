@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { PoolTableService } from './pooltable.service';
 import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
@@ -26,5 +26,9 @@ export class PoolTableController {
     return this.poolTableService.findOne(id);
   }
 
-  // Add more endpoints as needed
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return this.poolTableService.delete(id);
+  }
 }

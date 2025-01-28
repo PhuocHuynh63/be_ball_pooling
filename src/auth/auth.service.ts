@@ -46,15 +46,8 @@ export class AuthService {
     if (registerDto.role !== UserRole.USER) {
       throw new BadRequestException('Only user role can be assigned during registration');
     }
-    const hashedPassword = await hashPasswordHelper(registerDto.password);
-    const createdUser = new this.userService.userModel({
-      ...registerDto,
-      password: hashedPassword,
-      createdAt: new Date(),
-      deletedAt: null,
-    });
     try {
-      return await createdUser.save();
+      return await this.userService.createUser(registerDto);
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code
         throw new ConflictException('Email already exists');

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Store } from './entities/store.schema';
@@ -24,8 +24,29 @@ export class StoreService {
       throw new BadRequestException('User is not a manager');
     }
 
-    const createdStore = new this.storeModel(createStoreDto);
-    return createdStore.save();
+    // Normalize the address for comparison
+    const normalizedAddress = createStoreDto.address.trim().toLowerCase();
+
+    // Check if a store with the same address already exists
+    const existingStore = await this.storeModel.findOne({ address: normalizedAddress }).exec();
+    if (existingStore) {
+      throw new ConflictException('Store with this address already exists');
+    }
+
+    try {
+      // Trim the address for storage
+      const trimmedAddress = createStoreDto.address.trim();
+      const createdStore = new this.storeModel({
+        ...createStoreDto,
+        address: trimmedAddress,
+      });
+      return await createdStore.save();
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error
+        throw new ConflictException('Store with this address already exists');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<Store[]> {
@@ -56,5 +77,13 @@ export class StoreService {
     return existingStore.save();
   }
 
-  // Add more methods as needed
+  async delete(id: string): Promise<Store> {
+    const store = await this.storeModel.findById(id).exec();
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+    store.status = 'inactive'; // soft deletion
+    store.deletedAt = new Date();
+    return store.save();
+  }
 }

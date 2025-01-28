@@ -34,6 +34,9 @@ export class User extends Document {
 
   @Prop({ default: null })
   deletedAt: Date;
+
+  @Prop()
+  otp: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

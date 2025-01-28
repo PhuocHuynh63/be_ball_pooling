@@ -7,17 +7,20 @@ export class Store extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
-  location: string;
-
-  @Prop({ required: true })
-  status: string;
-
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true }) 
   address: string;
 
-  @Prop({ type: Types.ObjectId, ref: User.name, required: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   manager: Types.ObjectId;
+
+  @Prop({ default: 'active' })
+  status: string;
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
+
+  @Prop({ default: null })
+  deletedAt: Date;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);

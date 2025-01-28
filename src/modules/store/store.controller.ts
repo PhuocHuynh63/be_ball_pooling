@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
@@ -33,5 +33,9 @@ export class StoreController {
     return this.storeService.update(id, updateStoreDto);
   }
 
-  // Add more endpoints as needed
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return this.storeService.delete(id);
+  }
 }
