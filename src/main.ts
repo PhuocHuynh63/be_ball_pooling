@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +25,17 @@ async function bootstrap() {
       credentials: true
     }
   );
+
+  //ConfigSwagger
+  const config = new DocumentBuilder()
+    .setTitle('API PoolScoring')
+    .setDescription('NestJS API PoolScoring')
+    .setVersion('1.0')
+    // .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/document', app, document);
 
   await app.listen(port);
 }
