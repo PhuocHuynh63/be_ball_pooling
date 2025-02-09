@@ -12,16 +12,16 @@ export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateAuthDto): Promise<User> {
-    // Strong password regex
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // // Strong password regex
+    // const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-    // Validate password strength
-    if (!strongPasswordRegex.test(createUserDto.password)) {
-      throw new BadRequestException('Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
-    }
+    // // Validate password strength
+    // if (!strongPasswordRegex.test(createUserDto.password)) {
+    //   throw new BadRequestException('Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+    // }
 
     const hashedPassword = await hashPasswordHelper(createUserDto.password);
     const createdUser = new this.userModel({

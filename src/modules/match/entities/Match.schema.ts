@@ -10,6 +10,7 @@ export class Match extends Document {
       {
         user: { type: Types.ObjectId, ref: 'User' },
         team: { type: String, required: false },
+        _id: false,
       },
     ],
     required: true,

@@ -33,8 +33,18 @@ export class MatchController {
     return this.matchService.updateProgress(id, updateProgressDto);
   }
 
+  @Patch(':id/undo')
+  async undoLastProgress(@Param('id') id: string) {
+    return this.matchService.undoLastProgress(id);
+  }
+
   @Delete(':id')
   async delete(@Param('id') id: string) {
     return this.matchService.delete(id);
+  }
+
+  @Get(':id/result')
+  async getMatchResult(@Param('id') id: string) {
+    return this.matchService.getMatchResult(id);
   }
 }

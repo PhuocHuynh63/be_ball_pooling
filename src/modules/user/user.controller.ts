@@ -4,25 +4,25 @@ import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
-  create(@Body() createUserDto: CreateAuthDto) {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateAuthDto) {
+    return await this.userService.create(createUserDto);
   }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  async findAll() {
+    return await this.userService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return await this.userService.findOne(id);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.userService.delete(id);
+  async delete(@Param('id') id: string) {
+    return await this.userService.delete(id);
   }
 }
