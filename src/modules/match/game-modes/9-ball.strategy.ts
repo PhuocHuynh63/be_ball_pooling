@@ -21,7 +21,7 @@ export class NineBallStrategy {
     } else {
       match.result = {
         name: '9-Ball Match Result',
-        score: 0, // No winner
+        score: 0, // No winner test
         createdAt: new Date(),
         updatedAt: new Date(),
       };
