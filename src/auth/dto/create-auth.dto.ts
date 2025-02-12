@@ -1,28 +1,23 @@
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { UserRole } from '../../modules/user/entities/User.schema';
 
 export class CreateAuthDto {
-    @IsNotEmpty({ message: 'Fullname is required' })
-    fullname: string;
+  @IsNotEmpty({ message: 'Name is required' })
+  name: string;
 
-    @IsNotEmpty({ message: 'Email is required' })
-    email: string;
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string;
 
-    @IsNotEmpty({ message: 'Password is required' })
-    password: string;
-}
+  @IsNotEmpty({ message: 'Password is required' })
+  password: string;
 
-export class CodeAuthDto {
-    @IsNotEmpty({ message: '_id is required' })
-    _id: string;
+  @IsNotEmpty({ message: 'Phone is required' })
+  phone: string;
 
-    @IsNotEmpty({ message: 'Code is required' })
-    code: string;
-}
+  @IsNotEmpty({ message: 'Role is required' })
+  @IsEnum(UserRole, { message: 'Role must be user' })
+  role: UserRole.USER;
 
-export class UpdateAuthDto {
-    @IsNotEmpty({ message: 'Email is required' })
-    email: string;
-
-    @IsNotEmpty({ message: 'Password is required' })
-    password: string;
+  @IsNotEmpty({ message: 'Status is required' })
+  status: string;
 }
