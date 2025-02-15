@@ -6,7 +6,7 @@ import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @Controller('matches')
 export class MatchController {
-  constructor(private readonly matchService: MatchService) {}
+  constructor(private readonly matchService: MatchService) { }
 
   @Post()
   async create(@Body() createMatchDto: CreateMatchDto) {
@@ -28,12 +28,12 @@ export class MatchController {
     return this.matchService.update(id, updateMatchDto);
   }
 
-  @Patch(':id/progress')
+  @Patch('progress/:id')
   async updateProgress(@Param('id') id: string, @Body() updateProgressDto: UpdateProgressDto) {
     return this.matchService.updateProgress(id, updateProgressDto);
   }
 
-  @Patch(':id/undo')
+  @Patch('undo/:id')
   async undoLastProgress(@Param('id') id: string) {
     return this.matchService.undoLastProgress(id);
   }
@@ -43,7 +43,7 @@ export class MatchController {
     return this.matchService.delete(id);
   }
 
-  @Get(':id/result')
+  @Get('result/:id')
   async getMatchResult(@Param('id') id: string) {
     return this.matchService.getMatchResult(id);
   }
