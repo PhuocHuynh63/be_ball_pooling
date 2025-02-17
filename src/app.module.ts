@@ -12,6 +12,7 @@ import { PoolTableModule } from './modules/pooltable/pooltable.module';
 import { StoreModule } from './modules/store/store.module';
 import { MatchModule } from './modules/match/match.module';
 import { AuthModule } from './auth/auth.module';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { AuthModule } from './auth/auth.module';
     MatchModule,
     AuthModule,
     StoreModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [
