@@ -19,13 +19,13 @@ export class Team extends Document {
   @Prop({ required: true, default: 'active' })
   status: string;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ required: true, default: 0 }) //the final score of the team the score during match is locally stored
   score: number;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ required: true, default: 0 }) //the count of the foul during the match get fetch constantly to determine disqualification
   foulCount: number;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ required: true, default: 0 }) //the final count of strokes taken by the team
   stroke: number;
 }
 

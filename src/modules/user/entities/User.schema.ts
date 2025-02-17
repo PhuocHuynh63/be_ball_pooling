@@ -7,20 +7,27 @@ export enum UserRole {
   MANAGER = 'manager',
 }
 
+export type AuthProvider = 'local' | 'google';
+
 @Schema({
-  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
 })
 export class User extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: false })
+  @Prop()
   avatar: string;
 
-  @Prop({ required: false })
+  @Prop()
   phone: string;
 
-  @Prop({ required: true })
+  // Set password as required only when authProvider is 'local'
+  @Prop({
+    required: function(this: User) {
+      return this.authProvider === 'local';
+    },
+  })
   password: string;
 
   @Prop({ required: true, enum: UserRole })
@@ -37,6 +44,10 @@ export class User extends Document {
 
   @Prop()
   otp: string;
+
+  // New field to differentiate auth provider
+  @Prop({ required: true, enum: ['local', 'google'], default: 'local' })
+  authProvider: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
