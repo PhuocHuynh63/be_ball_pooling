@@ -5,7 +5,7 @@ import { UpdateMatchDto } from './dto/update-match.dto';
 
 @Controller('matches')
 export class MatchController {
-  constructor(private readonly matchService: MatchService) {}
+  constructor(private readonly matchService: MatchService) { }
 
   @Post()
   async create(@Body() createMatchDto: CreateMatchDto) {
@@ -32,8 +32,4 @@ export class MatchController {
     return this.matchService.delete(id);
   }
 
-  @Get('result/:id')
-  async getMatchResult(@Param('id') id: string) {
-    return this.matchService.getMatchResult(id);
-  }
 }
