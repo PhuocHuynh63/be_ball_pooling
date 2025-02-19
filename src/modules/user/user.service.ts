@@ -14,6 +14,7 @@ export class UserService {
     private readonly mailService: MailService,
   ) { }
 
+  //#region createUser 
   async createUser(createUserDto: CreateAuthDto): Promise<User> {
     // Ensure authProvider defaults to 'local' if not provided
     if (!createUserDto.authProvider) {
@@ -43,22 +44,30 @@ export class UserService {
     });
     return createdUser.save();
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<User> {
     return this.userModel.findById(id).exec();
   }
+  //#endregion
 
+  //#region findOneByEmail
   async findByEmail(email: string): Promise<User> {
     console.log('UserService: findByEmail: email:', email); // Debugging statement
     const user = await this.userModel.findOne({ email: email }).exec();
     console.log('UserService: findByEmail: user:', user); // Debugging statement
     return user;
   }
+  //#endregion
 
+  //#region sendCodeOTP
   async sendCodeOTP(email: string): Promise<any> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
@@ -70,7 +79,9 @@ export class UserService {
     await this.mailService.sendMail(email, 'Your OTP Code', `Your OTP code is ${otp}`);
     return { message: 'OTP sent' };
   }
+  //#endregion
 
+  //#region verifyCode
   async verifyCode(body: { email: string, code: string }): Promise<any> {
     const { email, code } = body; // Ensure email is declared
     const user = await this.userModel.findOne({ email }).exec();
@@ -84,7 +95,9 @@ export class UserService {
     await user.save();
     return { message: 'OTP verified' };
   }
+  //#endregion
 
+  //#region activateAccount
   async activeAccount(body: { email: string }): Promise<any> {
     const { email } = body; // Ensure email is declared
     const user = await this.userModel.findOne({ email }).exec();
@@ -98,7 +111,9 @@ export class UserService {
     await user.save();
     return { message: 'Account activated' };
   }
+  //#endregion
 
+  //#region resetPassword
   async resetPassword(data: UpdateAuthDto): Promise<any> {
     const { email, password } = data; // Ensure email is declared
     const user = await this.userModel.findOne({ email }).exec();
@@ -110,7 +125,9 @@ export class UserService {
     await user.save();
     return { message: 'Password reset successful' };
   }
+  //#endregion
 
+  //#region delete
   async delete(id: string): Promise<User> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
@@ -119,7 +136,9 @@ export class UserService {
     user.status = 'inactive'; // Set status to inactive for soft deletion
     return user.save();
   }
+  //#endregion
 
+  //#region checkActiveCode
   async checkActiveCode(id: string): Promise<any> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
@@ -130,4 +149,5 @@ export class UserService {
     }
     return { status: user.status };
   }
+  //#endregion
 }

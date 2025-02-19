@@ -16,6 +16,7 @@ export class MatchService {
     private readonly poolTableService: PoolTableService,
   ) { }
 
+  //#region create
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
     console.log(createMatchDto);
     for (const user of createMatchDto.users) {
@@ -33,11 +34,15 @@ export class MatchService {
     const createdMatch = new this.matchModel(createMatchDto);
     return createdMatch.save();
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<Match[]> {
     return this.matchModel.find({ deletedAt: null }).exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<MatchResponseDto> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -47,7 +52,9 @@ export class MatchService {
     // Removed progress-based checks since progress is now managed via the Team entity.
     return { match: match.toObject() };
   }
+  //#endregion
 
+  //#region update
   async update(id: string, updateMatchDto: UpdateMatchDto): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -57,7 +64,9 @@ export class MatchService {
     Object.assign(match, updateMatchDto);
     return match.save();
   }
+  //#endregion
 
+  //#region delete
   async delete(id: string): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -68,5 +77,5 @@ export class MatchService {
     match.deletedAt = new Date();
     return match.save();
   }
-
+  //#endregion
 }

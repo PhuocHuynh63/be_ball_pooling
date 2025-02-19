@@ -10,7 +10,8 @@ export class PoolTableService {
   constructor(
     @InjectModel(PoolTable.name) private readonly poolTableModel: Model<PoolTable>
   ) {}
-
+  
+  //#region create
   async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
     try {
       const createdPoolTable = new this.poolTableModel(createPoolTableDto);
@@ -22,11 +23,15 @@ export class PoolTableService {
       throw error;
     }
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<PoolTable[]> {
     return this.poolTableModel.find({ deletedAt: null }).exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<PoolTable> {
     const poolTable = await this.poolTableModel.findById(id).exec();
     if (!poolTable || poolTable.deletedAt) {
@@ -34,7 +39,9 @@ export class PoolTableService {
     }
     return poolTable;
   }
+  //#endregion
 
+  //#region update
   async update(id: string, updatePoolTableDto: UpdatePoolTableDto): Promise<PoolTable> {
     const poolTable = await this.poolTableModel.findById(id).exec();
     if (!poolTable || poolTable.deletedAt) {
@@ -44,7 +51,9 @@ export class PoolTableService {
     Object.assign(poolTable, updatePoolTableDto);
     return poolTable.save();
   }
+  //#endregion
 
+  //#region delete
   async delete(id: string): Promise<PoolTable> {
     const poolTable = await this.poolTableModel.findById(id).exec();
     if (!poolTable || poolTable.deletedAt) {
@@ -55,4 +64,5 @@ export class PoolTableService {
     poolTable.status = 'unavailable';
     return poolTable.save();
   }
+  //#endregion  
 }

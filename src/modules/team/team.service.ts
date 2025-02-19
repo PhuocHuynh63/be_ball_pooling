@@ -9,15 +9,20 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 export class TeamService {
   constructor(@InjectModel(Team.name) private teamModel: Model<Team>) {}
 
+  //#region create
   async create(createTeamDto: CreateTeamDto): Promise<Team> {
     const createdTeam = new this.teamModel(createTeamDto);
     return await createdTeam.save();
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<Team[]> {
     return this.teamModel.find().exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<Team> {
     const team = await this.teamModel.findById(id).exec();
     if (!team) {
@@ -25,7 +30,9 @@ export class TeamService {
     }
     return team;
   }
+  //#endregion
 
+  //#region update
   async update(id: string, updateTeamDto: UpdateTeamDto): Promise<Team> {
     const updatedTeam = await this.teamModel.findByIdAndUpdate(id, updateTeamDto, { new: true }).exec();
     if (!updatedTeam) {
@@ -33,7 +40,9 @@ export class TeamService {
     }
     return updatedTeam;
   }
+  //#endregion
 
+  //#region findMembers
   async findMembers(teamId: string) {
     const team = await this.teamModel.findById(teamId).populate('members').exec();
     if (!team) {
@@ -49,4 +58,5 @@ export class TeamService {
     }
     return team;
   }
+  //#endregion
 }
