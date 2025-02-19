@@ -11,8 +11,8 @@ export class GoogleAuthController {
   @Public()
   @ResponseMessage('Google login success')
   async googleLogin(@Body('token') token: string) {
-    const payload = await this.googleAuthService.verify(token);
-    return this.googleAuthService.loginOrSignup(payload);
+    // Pass the token string directly to loginOrSignup
+    return this.googleAuthService.loginOrSignup(token);
   }
 
   @Get('callback')
@@ -20,9 +20,9 @@ export class GoogleAuthController {
   @ResponseMessage('Google login success')
   async googleCallback(@Query('code') code: string, @Res() res: Response) {
     const token = await this.googleAuthService.getGoogleOAuthToken(code);
-    const payload = await this.googleAuthService.verify(token);
-    const { access_token } = await this.googleAuthService.loginOrSignup(payload);
+    // Pass the token string directly to loginOrSignup
+    const { access_token } = await this.googleAuthService.loginOrSignup(token);
     // Redirect to your frontend application with the access token
-    return res.redirect(`http://localhost:3001?token=${access_token}`);
+    return res.redirect(`http://localhost:3000?token=${access_token}`);
   }
 }

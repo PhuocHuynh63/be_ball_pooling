@@ -14,31 +14,34 @@ export class UserService {
     private readonly mailService: MailService,
   ) { }
 
-  async create(createUserDto: CreateAuthDto): Promise<User> {
-    // // Strong password regex
-    // const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  async createUser(createUserDto: CreateAuthDto): Promise<User> {
+    // Ensure authProvider defaults to 'local' if not provided
+    if (!createUserDto.authProvider) {
+      createUserDto.authProvider = 'local';
+    }
 
-    // // Validate password strength
-    // if (!strongPasswordRegex.test(createUserDto.password)) {
-    //   throw new BadRequestException('Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
-    // }
+    // Log the incoming password to debug its plain-text value
+    // console.log('Incoming password:', createUserDto.password);
 
-    const hashedPassword = await hashPasswordHelper(createUserDto.password);
-    const createdUser = new this.userModel({
-      ...createUserDto,
-      password: hashedPassword,
-      createdAt: new Date(),
-      deletedAt: null,
-    });
-    return createdUser.save();
-  }
+    // Enforce the strong password regex for local registration
+    if (createUserDto.authProvider === 'local') {
+      // const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      // if (!strongPasswordRegex.test(createUserDto.password)) {
+      //   throw new BadRequestException(
+      //     'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+      //   );
+      // }
+      // Hash the password for local registration
+      const hashedPassword = await hashPasswordHelper(createUserDto.password);
+      createUserDto.password = hashedPassword;
+    }
+
 
   //#region createUser
   async createUser(createUserDto: CreateAuthDto): Promise<User> {
     const hashedPassword = await hashPasswordHelper(createUserDto.password);
     const createdUser = new this.userModel({
       ...createUserDto,
-      password: hashedPassword,
       createdAt: new Date(),
       deletedAt: null,
     });

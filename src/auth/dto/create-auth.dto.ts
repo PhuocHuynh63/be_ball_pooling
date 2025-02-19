@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../../modules/user/entities/User.schema';
 
@@ -46,4 +46,14 @@ export class CreateAuthDto {
     description: 'Current status of the user account',
   })
   status: string;
+
+  @IsEnum(['local', 'google'], { message: 'Auth provider must be either local or google' })
+  @IsOptional()
+  @ApiProperty({
+    example: 'local',
+    description: 'Authentication provider for the user',
+    enum: ['local', 'google'],
+    default: 'local',
+  })
+  authProvider?: 'local' | 'google';
 }

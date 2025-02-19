@@ -1,15 +1,12 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Match } from './entities/Match.schema';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
-import { UpdateProgressDto } from './dto/update-progress.dto';
 import { MatchResponseDto } from './dto/match-response.dto';
 import { UserService } from '../user/user.service';
 import { PoolTableService } from '../pooltable/pooltable.service';
-import { GameModeStrategy } from './game-modes/game-mode.strategy';
-import { EightBallStrategy } from './game-modes/8-ball.strategy';
 
 @Injectable()
 export class MatchService {
@@ -17,11 +14,12 @@ export class MatchService {
     @InjectModel(Match.name) private matchModel: Model<Match>,
     private readonly userService: UserService,
     private readonly poolTableService: PoolTableService,
-  ) { }
+  ) {}
 
 
   //#region create
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
+    console.log(createMatchDto);
     for (const user of createMatchDto.users) {
       const existingUser = await this.userService.findOne(user.user);
       if (!existingUser) {
@@ -52,18 +50,8 @@ export class MatchService {
       throw new NotFoundException('Match not found');
     }
 
-    // Check if the 8-ball has been potted and if the game is finished
-    const isEightBallPotted = match.progress.some(stroke => stroke.ballsPotted.includes('8'));
-    const isGameFinished = match.status === 'completed';
-
-    if (!isEightBallPotted || !isGameFinished) {
-      return {
-        match: match.toObject(),
-        message: 'Game is not finished',
-      };
-    }
-
-    return { match };
+    // Removed progress-based checks since progress is now managed via the Team entity.
+    return { match: match.toObject() };
   }
   // #endregion 
 
@@ -163,7 +151,7 @@ export class MatchService {
       throw new NotFoundException('Match not found');
     }
 
-    match.status = 'deleted'; // Set status to deleted for soft deletion
+    match.status = 'deleted'; // For soft deletion
     match.deletedAt = new Date();
     return match.save();
   }
@@ -176,14 +164,9 @@ export class MatchService {
       throw new NotFoundException('Match not found');
     }
   
-    if (match.status !== 'completed' && match.status !== 'finished') {
-      throw new BadRequestException('Match is not finished');
-    }
-  
-    const gameModeStrategy = new EightBallStrategy();
-    const result = gameModeStrategy.calculateScore(match);
-  
-    return result;
+    // With progress now stored in teams, calculating the result may need to collect
+    // and aggregate data from the Team entity. Adapt this logic as needed.
+    return { match };
   }
   // #endregion
 }

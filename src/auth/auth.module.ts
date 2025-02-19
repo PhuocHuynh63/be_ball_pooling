@@ -11,17 +11,18 @@ import { JwtAuthGuard } from './passport/jwt-auth.guard';
 import { RolesGuard } from './passport/roles.guard';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from 'src/modules/user/entities/User.schema';
 
 @Module({
   imports: [
     UserModule,
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), // <-- Add this!
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED'),
-        },
+        signOptions: { expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED') },
       }),
       inject: [ConfigService],
     }),
@@ -29,6 +30,6 @@ import { GoogleAuthController } from './google-auth.controller';
   ],
   controllers: [AuthController, GoogleAuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService],
-  exports: [JwtAuthGuard, RolesGuard], 
+  exports: [JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

@@ -1,9 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/modules/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from 'src/modules/user/entities/User.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserRole } from 'src/modules/user/entities/User.schema';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 
 @Injectable()
 export class GoogleAuthService {
@@ -11,8 +13,8 @@ export class GoogleAuthService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     this.client = new OAuth2Client(
       this.configService.get<string>('GOOGLE_CLIENT_ID'),
@@ -41,19 +43,36 @@ export class GoogleAuthService {
     return payload;
   }
 
-  async loginOrSignup(payload: any) {
-    let user = await this.userService.findByEmail(payload.email);
+  // Private function that finds or creates a user based on GoogleAuthDto
+  private async findOrCreateUser(googleAuthDto: GoogleAuthDto): Promise<User> {
+    let user = await this.userModel.findOne({ email: googleAuthDto.email }).exec();
     if (!user) {
-      user = await this.userService.create({
-        name: payload.name,
-        email: payload.email,
-        password: '', // No password needed for Google login
-        phone: '', // You can ask for phone number later
+      user = new this.userModel({
+        name: googleAuthDto.name,
+        email: googleAuthDto.email,
+        password: '',         // Dummy empty password
+        phone: '',
         role: UserRole.USER,
         status: 'active',
+        authProvider: 'google',  // Explicitly set as google
       });
+      await user.save();
     }
-    const accessToken = this.jwtService.sign({ email: user.email, sub: user._id, role: user.role });
+    return user;
+  }
+
+  async loginOrSignup(token: string): Promise<{ user: User; access_token: string }> {
+    const payload = await this.verify(token);
+    const googleAuthDto: GoogleAuthDto = {
+      name: payload.name,
+      email: payload.email,
+    };
+    const user = await this.findOrCreateUser(googleAuthDto);
+    const accessToken = this.jwtService.sign({ 
+      email: user.email, 
+      sub: user._id, 
+      role: user.role 
+    });
     return { user, access_token: accessToken };
   }
 }
