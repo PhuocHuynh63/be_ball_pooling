@@ -19,6 +19,8 @@ export class MatchService {
     private readonly poolTableService: PoolTableService,
   ) { }
 
+
+  //#region create
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
     for (const user of createMatchDto.users) {
       const existingUser = await this.userService.findOne(user.user);
@@ -35,11 +37,15 @@ export class MatchService {
     const createdMatch = new this.matchModel(createMatchDto);
     return createdMatch.save();
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<Match[]> {
     return this.matchModel.find({ deletedAt: null }).exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<MatchResponseDto> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -59,7 +65,9 @@ export class MatchService {
 
     return { match };
   }
+  // #endregion 
 
+  //#region update
   async update(id: string, updateMatchDto: UpdateMatchDto): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -69,7 +77,9 @@ export class MatchService {
     Object.assign(match, updateMatchDto);
     return match.save();
   }
+  // #endregion 
 
+  //#region updateProgress
   async updateProgress(id: string, updateProgressDto: UpdateProgressDto): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -115,7 +125,9 @@ export class MatchService {
   
     return match.save();
   }
+  // #endregion
 
+  //#region undoLastProgress
   async undoLastProgress(id: string): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -142,7 +154,9 @@ export class MatchService {
     match.updatedAt = new Date();
     return match.save();
   }
+  // #endregion
 
+  //#region delete
   async delete(id: string): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -153,7 +167,9 @@ export class MatchService {
     match.deletedAt = new Date();
     return match.save();
   }
+  // #endregion
 
+  //#region getMatchResult
   async getMatchResult(id: string): Promise<any> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -169,4 +185,5 @@ export class MatchService {
   
     return result;
   }
+  // #endregion
 }

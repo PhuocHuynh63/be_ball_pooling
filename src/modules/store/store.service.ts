@@ -14,6 +14,8 @@ export class StoreService {
     private readonly userService: UserService,
   ) {}
 
+
+  //#region create
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
     // Check if the manager exists and has the role of manager
     const manager = await this.userService.findOne(createStoreDto.manager);
@@ -48,15 +50,21 @@ export class StoreService {
       throw error;
     }
   }
+  //#endregion
 
+  //#region findAll
   async findAll(): Promise<Store[]> {
     return this.storeModel.find().exec();
   }
+  //#endregion
 
+  //#region findOne
   async findOne(id: string): Promise<Store> {
     return this.storeModel.findById(id).exec();
   }
+  //#endregion
 
+  //#region update
   async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store> {
     const existingStore = await this.storeModel.findById(id).exec();
     if (!existingStore) {
@@ -76,7 +84,9 @@ export class StoreService {
     Object.assign(existingStore, updateStoreDto);
     return existingStore.save();
   }
-
+  //#endregion
+  
+  //#region delete
   async delete(id: string): Promise<Store> {
     const store = await this.storeModel.findById(id).exec();
     if (!store) {
@@ -86,4 +96,5 @@ export class StoreService {
     store.deletedAt = new Date();
     return store.save();
   }
+  //#endregion
 }
