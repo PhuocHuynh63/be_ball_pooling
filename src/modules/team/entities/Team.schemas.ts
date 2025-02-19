@@ -3,30 +3,45 @@ import { Document, Types } from 'mongoose';
 import { User } from '../../user/entities/User.schema';
 import { Match } from '../../match/entities/Match.schema';
 
+export enum TeamStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}
+
 @Schema({
-  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
+})
+export class Result {
+  @Prop({ required: true, default: 0, min: 0 })
+  score: number;
+
+  @Prop({ required: true, default: 0, min: 0 })
+  foulCount: number;
+
+  @Prop({ required: true, default: 0, min: 0 })
+  strokes: number;
+}
+
+export const ResultSchema = SchemaFactory.createForClass(Result);
+
+@Schema({
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
 })
 export class Team extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   teamName: string;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   members: Types.ObjectId[];
 
-  @Prop({ type: Types.ObjectId, ref: 'Match', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Match', required: true, index: true })
   match: Types.ObjectId;
 
-  @Prop({ required: true, default: 'active' })
+  @Prop({ required: true, default: TeamStatus.ACTIVE, enum: TeamStatus })
   status: string;
 
-  @Prop({ required: true, default: 0 }) //the final score of the team the score during match is locally stored
-  score: number;
-
-  @Prop({ required: true, default: 0 }) //the count of the foul during the match get fetch constantly to determine disqualification
-  foulCount: number;
-
-  @Prop({ required: true, default: 0 }) //the final count of strokes taken by the team
-  stroke: number;
+  @Prop({ type: ResultSchema, default: () => ({}) })
+  result: Result;
 }
 
 export const TeamSchema = SchemaFactory.createForClass(Team);

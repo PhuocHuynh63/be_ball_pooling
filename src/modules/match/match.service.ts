@@ -14,7 +14,7 @@ export class MatchService {
     @InjectModel(Match.name) private matchModel: Model<Match>,
     private readonly userService: UserService,
     private readonly poolTableService: PoolTableService,
-  ) {}
+  ) { }
 
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
     console.log(createMatchDto);
@@ -58,9 +58,6 @@ export class MatchService {
     return match.save();
   }
 
-  // The updateProgress and undoLastProgress methods have been removed since
-  // progress is now handled in the Team entity.
-
   async delete(id: string): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -72,14 +69,4 @@ export class MatchService {
     return match.save();
   }
 
-  async getMatchResult(id: string): Promise<any> {
-    const match = await this.matchModel.findById(id).exec();
-    if (!match || match.deletedAt) {
-      throw new NotFoundException('Match not found');
-    }
-  
-    // With progress now stored in teams, calculating the result may need to collect
-    // and aggregate data from the Team entity. Adapt this logic as needed.
-    return { match };
-  }
 }

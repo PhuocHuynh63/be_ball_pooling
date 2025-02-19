@@ -5,7 +5,7 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Controller('teams')
 export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+  constructor(private readonly teamService: TeamService) { }
 
   @Post()
   async create(@Body() createTeamDto: CreateTeamDto) {
@@ -27,10 +27,10 @@ export class TeamController {
     return this.teamService.update(id, updateTeamDto);
   }
 
-  @Get(':id/members')
+  @Get('/members/:id')
   async getMembers(@Param('id') id: string) {
-  return this.teamService.findMembers(id);
-}
+    return this.teamService.findMembers(id);
+  }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
