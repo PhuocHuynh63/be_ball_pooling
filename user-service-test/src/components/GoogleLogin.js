@@ -5,7 +5,7 @@ const GoogleLoginComponent = ({ setToken, setRole }) => {
   const handleSuccess = (response) => {
     console.log('Google login successful:', response);
     // Send the response token to your backend to verify and get the user info
-    fetch('http://localhost:3000/api/v1/auth/google', {
+    fetch('http://localhost:8080/api/v1/auth/google', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

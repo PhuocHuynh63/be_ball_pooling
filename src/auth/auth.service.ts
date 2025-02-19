@@ -49,9 +49,9 @@ export class AuthService {
     try {
       return await this.userService.createUser(registerDto);
     } catch (error) {
-      if (error.code === 11000) { // Duplicate key error code
+      if (error.code === 11000) { // 409 conflict
         throw new ConflictException('Email already exists');
-      }
+      }//bad request 
       throw error;
     }
   }
