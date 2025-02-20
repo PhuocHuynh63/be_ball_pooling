@@ -19,12 +19,6 @@ export class MatchService {
   //#region create
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
     console.log(createMatchDto);
-    for (const user of createMatchDto.users) {
-      const existingUser = await this.userService.findOne(user.user);
-      if (!existingUser) {
-        throw new BadRequestException(`User with ID ${user.user} does not exist`);
-      }
-    }
 
     const poolTable = await this.poolTableService.findOne(createMatchDto.pooltable);
     if (!poolTable) {
@@ -78,4 +72,6 @@ export class MatchService {
     return match.save();
   }
   //#endregion
+
+  2
 }

@@ -1,4 +1,20 @@
-import { IsNotEmpty, IsMongoId, IsOptional, IsString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsMongoId, IsOptional, IsString, IsNumber, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Types } from 'mongoose';
+
+class ResultDto {
+  @IsNotEmpty()
+  @IsNumber()
+  score: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  foulCount: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  strokes: number;
+}
 
 export class CreateTeamDto {
   @IsNotEmpty()
@@ -6,26 +22,15 @@ export class CreateTeamDto {
   teamName: string;
 
   @IsNotEmpty()
-  @IsMongoId()
-  user: string;
+  @IsMongoId({ each: true })
+  members: Types.ObjectId[];
 
   @IsNotEmpty()
   @IsMongoId()
-  match: string;
+  match: Types.ObjectId;
 
   @IsOptional()
-  @IsString()
-  status?: string;
-
-  @IsOptional()
-  @IsNumber()
-  score?: number;
-
-  @IsOptional()
-  @IsNumber()
-  foulCount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  stroke?: number;
+  @ValidateNested()
+  @Type(() => ResultDto)
+  result?: ResultDto;
 }

@@ -10,9 +10,9 @@ export class TeamService {
   constructor(@InjectModel(Team.name) private teamModel: Model<Team>) {}
 
   //#region create
-  async create(createTeamDto: CreateTeamDto): Promise<Team> {
-    const createdTeam = new this.teamModel(createTeamDto);
-    return await createdTeam.save();
+  create(createTeamDto: CreateTeamDto) {
+    const createdTeam =  this.teamModel.create(createTeamDto);
+    return createdTeam;
   }
   //#endregion
 
@@ -50,13 +50,26 @@ export class TeamService {
     }
     return team.members;
   }
+   //#endregion
 
+  //#region remove
   async remove(id: string): Promise<Team> {
-    const team = await this.teamModel.findByIdAndDelete(id).exec();
+    const team = await this.teamModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { new: true }
+    ).exec();
+  
     if (!team) {
       throw new NotFoundException(`Team with id '${id}' not found`);
     }
     return team;
   }
   //#endregion
+ 
 }

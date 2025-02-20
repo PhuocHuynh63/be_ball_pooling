@@ -108,14 +108,39 @@ export class StoreService {
   //#endregion
 
   //#region delete
-  async delete(id: string): Promise<Store> {
-    const store = await this.storeModel.findById(id).exec();
-    if (!store) {
-      throw new NotFoundException('Store not found');
+  async delete(id: string) {
+    try {
+      const softDeleteStore = await this.storeModel.findByIdAndUpdate(
+        id,
+        [
+          { 
+            $set: { 
+              isDeleted: { $not: "$isDeleted" },
+              deletedAt: { $cond: { if: { $eq: ["$isDeleted", false] }, then: new Date(), else: null } }
+            } 
+          }
+        ],
+        { new: true }
+      ).exec();
+  
+      if (!softDeleteStore) {
+        throw new NotFoundException(`No data found for id ${id}`);
+      }
+      return {
+        data: {
+          _id: softDeleteStore._id,
+          name: softDeleteStore.name,
+          isDeleted: softDeleteStore.isDeleted,
+          deletedAt: softDeleteStore.deletedAt
+        },
+        message: 'Deleted successfully'
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error('Error');
     }
-    store.status = 'inactive'; // soft deletion
-    store.deletedAt = new Date();
-    return store.save();
   }
   //#endregion
 }

@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { User } from '../../user/entities/User.schema';
 
-@Schema()
+@Schema({ timestamps: true }) //  Bật timestamps để tự động thêm createdAt & updatedAt
 export class Store extends Document {
   @Prop({ required: true })
   name: string;
@@ -13,14 +13,11 @@ export class Store extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   manager: Types.ObjectId;
 
-  @Prop({ default: 'active' })
-  status: string;
+  @Prop({ default: false }) // Boolean hợp lệ
+  isDeleted: boolean;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
-
-  @Prop({ default: null })
-  deletedAt: Date;
+  @Prop({ type: Date, default: null }) // Xác định kiểu Date rõ ràng
+  deletedAt: Date | null;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);

@@ -3,10 +3,7 @@ import { Document, Types } from 'mongoose';
 import { User } from '../../user/entities/User.schema';
 import { Match } from '../../match/entities/Match.schema';
 
-export enum TeamStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-}
+
 
 @Schema({
   timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
@@ -37,11 +34,14 @@ export class Team extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Match', required: true, index: true })
   match: Types.ObjectId;
 
-  @Prop({ required: true, default: TeamStatus.ACTIVE, enum: TeamStatus })
-  status: string;
-
   @Prop({ type: ResultSchema, default: () => ({}) })
   result: Result;
+
+  @Prop({ default: false })
+  isDeleted: boolean;
+
+  @Prop({ type: Date, default: null })
+  deletedAt: Date | null;
 }
 
 export const TeamSchema = SchemaFactory.createForClass(Team);
