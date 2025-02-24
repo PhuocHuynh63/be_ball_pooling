@@ -1,14 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from '../../user/entities/User.schema';
-import { Match } from '../../match/entities/Match.schema';
 
 
-
-@Schema({
-  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
-})
-export class Result {
+class Result {
   @Prop({ required: true, default: 0, min: 0 })
   score: number;
 
@@ -18,8 +12,6 @@ export class Result {
   @Prop({ required: true, default: 0, min: 0 })
   strokes: number;
 }
-
-export const ResultSchema = SchemaFactory.createForClass(Result);
 
 @Schema({
   timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
@@ -34,7 +26,7 @@ export class Team extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Match', required: true, index: true })
   match: Types.ObjectId;
 
-  @Prop({ type: ResultSchema, default: () => ({}) })
+  @Prop({ default: () => ({}) })
   result: Result;
 
   @Prop({ default: false })
