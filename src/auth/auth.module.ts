@@ -12,7 +12,7 @@ import { RolesGuard } from './passport/roles.guard';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from 'src/modules/user/entities/User.schema';
+import { User, UserSchema } from '@modules/user/entities/user.schema';
 
 @Module({
   imports: [
@@ -21,6 +21,7 @@ import { User, UserSchema } from 'src/modules/user/entities/User.schema';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
+        global: true,
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED') },
       }),

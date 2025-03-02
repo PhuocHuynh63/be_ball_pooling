@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from './entities/User.schema';
+import { Model, Types } from 'mongoose';
+import { User } from './entities/user.schema';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 import { UpdateAuthDto } from '../../auth/dto/update-auth.dto';
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
@@ -26,13 +27,7 @@ export class UserService {
 
     // Enforce the strong password regex for local registration
     if (createUserDto.authProvider === 'local') {
-      // const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-      // if (!strongPasswordRegex.test(createUserDto.password)) {
-      //   throw new BadRequestException(
-      //     'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
-      //   );
-      // }
-      // Hash the password for local registration
+     
       const hashedPassword = await hashPasswordHelper(createUserDto.password);
       createUserDto.password = hashedPassword;
     }
@@ -52,12 +47,104 @@ export class UserService {
   }
   //#endregion
 
-  //#region findOne
-  async findOne(id: string): Promise<User> {
-    return this.userModel.findById(id).exec();
+  async findUserByAnyThing(query: Record<string, any>): Promise<User> {
+    if (!query || Object.keys(query).length === 0) {
+      throw new BadRequestException('At least one search parameter must be provided');
+    }
+
+    // Tạo một biến chứa điều kiện tìm kiếm
+    let searchCriteria: Record<string, any> = {};
+
+    // Lặp qua từng key trong query để xử lý tương ứng
+    for (const key in query) {
+      switch (key) {
+        case '_id':
+          if (Types.ObjectId.isValid(query._id)) {
+            searchCriteria._id = query._id;
+          }
+          break;
+
+        case 'email':
+          searchCriteria.email = query.email;
+          break;
+
+        case 'phone':
+          searchCriteria.phone = query.phone;
+          break;
+
+        case 'name':
+          searchCriteria.name = { $regex: new RegExp(query.name, 'i') }; // Tìm gần đúng
+          break;
+
+        case 'role':
+          searchCriteria.role = query.role;
+          break;
+
+        case 'authProvider':
+          if (['local', 'google'].includes(query.authProvider)) {
+            searchCriteria.authProvider = query.authProvider;
+          }
+          break;
+
+        case 'status':
+          searchCriteria.status = query.status;
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    // Kiểm tra nếu không có tham số hợp lệ nào
+    if (Object.keys(searchCriteria).length === 0) {
+      throw new BadRequestException('No valid search parameters provided');
+    }
+
+    // Thực hiện tìm kiếm
+    const user = await this.userModel.findOne(searchCriteria).lean().exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
   //#endregion
 
+  //#region findOne
+  async findOne(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).exec();
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    
+    return user;
+  }
+  //#endregion
+
+//#region findEmail
+async findEmail(email: string): Promise<User> {
+  const user = await this
+  .userModel.findOne({ email: email }).exec();
+  if (!user) {
+    throw new NotFoundException(`User with Email ${email} not found`);
+  }
+  return user;
+}
+//#endregion
+
+  //#region findEmailandPassword
+  async findEmailandPassword(email: string, password: string): Promise<User> {
+    const user = await this.userModel.findOne({ email }).exec();
+    
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new NotFoundException('Invalid email or password');
+    }
+  
+    return user;
+  }
+    //#endregion
+  
   //#region findOneByEmail
   async findByEmail(email: string): Promise<User> {
     console.log('UserService: findByEmail: email:', email); // Debugging statement
@@ -150,4 +237,6 @@ export class UserService {
     return { status: user.status };
   }
   //#endregion
+
+
 }

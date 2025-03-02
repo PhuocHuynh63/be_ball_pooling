@@ -5,7 +5,7 @@ import { Store } from './entities/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { UserService } from '../user/user.service';
-import { UserRole } from '../user/entities/User.schema';
+import { UserRole } from '../user/entities/user.schema';
 
 @Injectable()
 export class StoreService {

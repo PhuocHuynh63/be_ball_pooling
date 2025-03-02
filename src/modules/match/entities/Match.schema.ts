@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { PoolTable } from '../../pooltable/entities/PoolTable.schema';
+import { PoolTable } from '../../pooltable/entities/poolTable.schema';
 
 @Schema({
   timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Store } from '../../store/entities/Store.schema';
+import { Store } from '../../store/entities/store.schema';
 
 @Schema()
 export class PoolTable extends Document {

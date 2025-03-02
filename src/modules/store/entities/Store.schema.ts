@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from '../../user/entities/User.schema';
+import { User } from '../../user/entities/user.schema';
 
 @Schema({ timestamps: true }) //  Bật timestamps để tự động thêm createdAt & updatedAt
 export class Store extends Document {

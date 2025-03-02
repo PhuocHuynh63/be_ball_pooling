@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../../modules/user/entities/User.schema';
+import { UserRole } from '../../modules/user/entities/user.schema';
 
 export class CreateAuthDto {
   @IsNotEmpty({ message: 'Name is required' })
@@ -38,9 +38,8 @@ export class CreateAuthDto {
     description: 'Role for the user',
     enum: UserRole,
   })
-  role: UserRole.USER;
+  role: UserRole;
 
-  @IsNotEmpty({ message: 'Status is required' })
   @ApiProperty({
     example: 'active',
     description: 'Current status of the user account',

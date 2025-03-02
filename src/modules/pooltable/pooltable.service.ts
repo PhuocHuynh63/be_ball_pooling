@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PoolTable } from './entities/PoolTable.schema';
+import { PoolTable } from './entities/poolTable.schema';
 import { CreatePoolTableDto } from './dto/create-pooltable.dto';
 import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
 

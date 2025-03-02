@@ -1,0 +1,24 @@
+version: '2.2'
+services:
+  # Backend Service (NestJS)
+  backend:
+    container_name: backend
+    build:
+      context: /home/root/BE2
+      dockerfile: Dockerfile
+    environment:
+      MONGODB_URI: mongodb+srv://thuanbakhac:hpcy71ygt54r2@cluster0.500p5ep.mongodb.net/
+      DATABASE_USER: SA
+      DATABASE_PASS: YourStrong@Passw0rd
+      JWT_SECRET: SECRET_STRING
+      JWT_ACCESS_TOKEN_EXPIRED: 365d
+  
+    ports:
+      - "8080:8080"
+    networks:
+      - mge2116net
+
+# Define the network
+networks:
+  mge2116net:
+    driver: bridge

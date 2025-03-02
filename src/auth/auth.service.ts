@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { UserRole } from '@modules/user/entities/User.schema';
+import { UserRole } from '@modules/user/entities/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -14,9 +14,7 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    console.log('AuthService: validateUser: email:', email); // Debugging statement
-    const user = await this.userService.findByEmail(email);
-    console.log('AuthService: validateUser: user:', user); // Debugging statement
+    const user = await this.userService.findEmailandPassword(email, password);
     if (!user) {
       return null;
     }
@@ -43,7 +41,7 @@ export class AuthService {
   }
 
   async handleRegister(registerDto: CreateAuthDto) {
-    if (registerDto.role !== UserRole.USER) {
+    if (!Object.values(UserRole).includes(registerDto.role)) {
       throw new BadRequestException('Only user role can be assigned during registration');
     }
     try {

@@ -33,7 +33,7 @@ export class User extends Document {
   @Prop({ required: true, enum: UserRole })
   role: UserRole;
 
-  @Prop({ required: true })
+  @Prop({ default: 'active' })
   status: string;
 
   @Prop({ required: true, unique: true })

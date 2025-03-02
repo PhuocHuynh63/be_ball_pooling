@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
+import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
+
 
 @Controller('users')
 export class UserController {
@@ -20,6 +22,7 @@ export class UserController {
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);
   }
+
 
   @Delete(':id')
   async delete(@Param('id') id: string) {
