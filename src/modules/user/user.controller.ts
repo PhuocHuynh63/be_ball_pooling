@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, NotFoundException, BadRequestException, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
-import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
-import { find } from 'rxjs';
-import { Public } from 'src/decorator/custom';
+import { updateUsersDto } from './dto/update-user.dto';
+import { request } from 'https';
 
 
 @Controller('users')
@@ -20,12 +19,14 @@ export class UserController {
     return await this.userService.createUser(createUserDto);
   }
 
-  
+  @Put()
+  async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto) {
+    return await this.userService.updateUser(id, updateUsersDto);
+  }
 
   @Delete(':id')
   async delete(@Param('id') id: string) {
     return await this.userService.delete(id);
   }
-
 
 }

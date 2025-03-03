@@ -7,6 +7,7 @@ import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 import { UpdateAuthDto } from '../../auth/dto/update-auth.dto';
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
+import { updateUsersDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -41,6 +42,30 @@ export class UserService {
   }
   //#endregion
 
+  //#region updateUser 
+  async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
+    // Ensure authProvider defaults to 'local' if not provided
+    if (!updateUsers.authProvider) {
+      updateUsers.authProvider = 'local';
+    }
+  
+    // Log the incoming password to debug its plain-text value
+    // console.log('Incoming password:', updateUsers.password);
+  
+    // Enforce the strong password regex for local registration
+    if (updateUsers.authProvider === 'local' && updateUsers.password) {
+      const hashedPassword = await hashPasswordHelper(updateUsers.password);
+      updateUsers.password = hashedPassword;
+    }
+  
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUsers, { new: true }).exec();
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return updatedUser;
+  }
+  //#endregion
+  
   //#region findAll
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
