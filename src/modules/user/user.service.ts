@@ -47,66 +47,43 @@ export class UserService {
   }
   //#endregion
 
-  async findUserByAnyThing(query: Record<string, any>): Promise<User> {
-    if (!query || Object.keys(query).length === 0) {
-      throw new BadRequestException('At least one search parameter must be provided');
+  //#region find
+  async find(query: any): Promise<User[]> {
+    console.log('Query parameters:', query); // Logging query parameters
+  
+    // Nếu không có tham số truy vấn, trả về tất cả người dùng
+    if (Object.keys(query).length === 0) {
+      return this.findAll();
     }
-
-    // Tạo một biến chứa điều kiện tìm kiếm
-    let searchCriteria: Record<string, any> = {};
-
-    // Lặp qua từng key trong query để xử lý tương ứng
+  
+    // Xây dựng đối tượng truy vấn động
+    const queryObject: any = {};
+  
     for (const key in query) {
-      switch (key) {
-        case '_id':
-          if (Types.ObjectId.isValid(query._id)) {
-            searchCriteria._id = query._id;
-          }
-          break;
-
-        case 'email':
-          searchCriteria.email = query.email;
-          break;
-
-        case 'phone':
-          searchCriteria.phone = query.phone;
-          break;
-
-        case 'name':
-          searchCriteria.name = { $regex: new RegExp(query.name, 'i') }; // Tìm gần đúng
-          break;
-
-        case 'role':
-          searchCriteria.role = query.role;
-          break;
-
-        case 'authProvider':
-          if (['local', 'google'].includes(query.authProvider)) {
-            searchCriteria.authProvider = query.authProvider;
-          }
-          break;
-
-        case 'status':
-          searchCriteria.status = query.status;
-          break;
-
-        default:
-          break;
+      if (query.hasOwnProperty(key)) {
+        switch (key) {
+          case 'id':
+            queryObject._id = query[key];
+            break;
+          case 'name':
+            queryObject.name = query[key];
+            break;
+          case 'email':
+            queryObject.email = query[key];
+            break;
+          case 'role':
+            queryObject.role = query[key];
+            break;
+          default:
+            console.log(`Unknown query parameter: ${key}`);
+        }
       }
     }
-
-    // Kiểm tra nếu không có tham số hợp lệ nào
-    if (Object.keys(searchCriteria).length === 0) {
-      throw new BadRequestException('No valid search parameters provided');
-    }
-
-    // Thực hiện tìm kiếm
-    const user = await this.userModel.findOne(searchCriteria).lean().exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
+  
+    console.log('Query object:', queryObject); // Logging query object
+    const users = await this.userModel.find(queryObject).exec();
+    console.log('Found users:', users); // Logging found users
+    return users;
   }
   //#endregion
 
@@ -122,16 +99,16 @@ export class UserService {
   }
   //#endregion
 
-//#region findEmail
-async findEmail(email: string): Promise<User> {
-  const user = await this
-  .userModel.findOne({ email: email }).exec();
-  if (!user) {
-    throw new NotFoundException(`User with Email ${email} not found`);
+  //#region findEmail
+  async findEmail(email: string): Promise<User> {
+    const user = await this
+    .userModel.findOne({ email: email }).exec();
+    if (!user) {
+      throw new NotFoundException(`User with Email ${email} not found`);
+    }
+    return user;
   }
-  return user;
-}
-//#endregion
+  //#endregion
 
   //#region findEmailandPassword
   async findEmailandPassword(email: string, password: string): Promise<User> {

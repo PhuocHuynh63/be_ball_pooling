@@ -21,5 +21,9 @@
       "@modules/*": ["src/modules/*"],
       "@schemas/*": ["src/schemas/*"]
     }
-  }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/config/**/*"
+  ]
 }
