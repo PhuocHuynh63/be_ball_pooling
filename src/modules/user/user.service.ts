@@ -46,17 +46,6 @@ export class UserService {
 
   //#region updateUser 
   async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
-    // Ensure authProvider defaults to 'local' if not provided
-    if (!updateUsers.authProvider) {
-      updateUsers.authProvider = 'local';
-    }
-
-    // Enforce the strong password regex for local registration
-    if (updateUsers.authProvider === 'local' && updateUsers.password) {
-      const hashedPassword = await hashPasswordHelper(updateUsers.password);
-      updateUsers.password = hashedPassword;
-    }
-  
     const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUsers, { new: true }).exec();
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);

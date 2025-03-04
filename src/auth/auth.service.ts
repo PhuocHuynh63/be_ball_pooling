@@ -42,20 +42,15 @@ export class AuthService {
     };
   }
 
-  async handleRegister(registerDto: CreateAuthDto, file?: Express.Multer.File) {
+  //tạo user bth
+  async handleRegister(registerDto: CreateAuthDto) {
     if (!Object.values(UserRole).includes(registerDto.role)) {
       throw new BadRequestException('Only user role can be assigned during registration');
     }
-
     try {
-      let avatarUrl = '';
-      if (file) {
-        avatarUrl = await this.uploadService.uploadImage(file);
-      }
-
+     
       return await this.userService.createUser({
         ...registerDto,
-        avatar: avatarUrl, // Lưu avatar vào user
       });
     } catch (error) {
       if (error.code === 11000) {

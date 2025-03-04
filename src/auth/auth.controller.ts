@@ -25,9 +25,7 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  @UseInterceptors(FileInterceptor('avatar')) // Lấy file avatar từ request
-  register(@Body() registerDto: CreateAuthDto, 
-           @UploadedFile() file: Express.Multer.File) {
-    return this.authService.handleRegister(registerDto, file);
+  register(@Body() registerDto: CreateAuthDto) {
+    return this.authService.handleRegister(registerDto);
   }
 }

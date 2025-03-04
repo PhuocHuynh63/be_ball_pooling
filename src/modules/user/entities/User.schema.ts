@@ -16,7 +16,7 @@ export class User extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({default: 'avatar.png'})
+  @Prop({default: 'https://asset.cloudinary.com/dfbv4omnx/553d9ff1c8dd8f9bb00c724a56ef7fbd'})
   avatar: string;
 
   @Prop()
