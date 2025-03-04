@@ -8,12 +8,14 @@ import { UpdateAuthDto } from '../../auth/dto/update-auth.dto';
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
 import { updateUsersDto } from './dto/update-user.dto';
+import { UploadService } from 'src/upload/upload.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly mailService: MailService,
+    private readonly uploadService: UploadService,
   ) { }
 
   //#region createUser 

@@ -46,7 +46,7 @@ async function bootstrap() {
     .setTitle('API PoolScoring')
     .setDescription('NestJS API PoolScoring')
     .setVersion('1.0')
-    // .addBearerAuth()
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

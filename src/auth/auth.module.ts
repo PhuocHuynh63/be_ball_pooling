@@ -14,10 +14,13 @@ import { GoogleAuthController } from './google-auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@modules/user/entities/user.schema';
 import { GoogleStrategy } from './passport/google.strategy';
+import { UploadService } from 'src/upload/upload.service';
+import { CloudinaryModule } from 'src/upload/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     UserModule,
+    CloudinaryModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), // <-- Add this!
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -31,7 +34,7 @@ import { GoogleStrategy } from './passport/google.strategy';
     PassportModule,
   ],
   controllers: [AuthController, GoogleAuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy, UploadService],
   exports: [JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

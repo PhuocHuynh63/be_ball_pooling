@@ -5,12 +5,14 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
 import { UserRole } from '@modules/user/entities/user.schema';
+import { UploadService } from 'src/upload/upload.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -40,16 +42,25 @@ export class AuthService {
     };
   }
 
-  async handleRegister(registerDto: CreateAuthDto) {
+  async handleRegister(registerDto: CreateAuthDto, file?: Express.Multer.File) {
     if (!Object.values(UserRole).includes(registerDto.role)) {
       throw new BadRequestException('Only user role can be assigned during registration');
     }
+
     try {
-      return await this.userService.createUser(registerDto);
+      let avatarUrl = '';
+      if (file) {
+        avatarUrl = await this.uploadService.uploadImage(file);
+      }
+
+      return await this.userService.createUser({
+        ...registerDto,
+        avatar: avatarUrl, // Lưu avatar vào user
+      });
     } catch (error) {
-      if (error.code === 11000) { // 409 conflict
+      if (error.code === 11000) {
         throw new ConflictException('Email already exists');
-      }//bad request 
+      }
       throw error;
     }
   }

@@ -13,6 +13,7 @@ import { StoreModule } from './modules/store/store.module';
 import { MatchModule } from './modules/match/match.module';
 import { AuthModule } from './auth/auth.module';
 import { TeamModule } from './modules/team/team.module';
+import { UploadModule } from './upload/upload.module';
 
 
 
@@ -68,7 +69,8 @@ import { TeamModule } from './modules/team/team.module';
     MatchModule,
     AuthModule,
     StoreModule,
-    TeamModule
+    TeamModule,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [
