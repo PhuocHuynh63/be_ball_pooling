@@ -48,10 +48,7 @@ export class UserService {
     if (!updateUsers.authProvider) {
       updateUsers.authProvider = 'local';
     }
-  
-    // Log the incoming password to debug its plain-text value
-    // console.log('Incoming password:', updateUsers.password);
-  
+
     // Enforce the strong password regex for local registration
     if (updateUsers.authProvider === 'local' && updateUsers.password) {
       const hashedPassword = await hashPasswordHelper(updateUsers.password);

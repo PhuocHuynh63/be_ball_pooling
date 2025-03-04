@@ -1,28 +1,28 @@
-import { Controller, Post, Body, Get, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { GoogleAuthService } from './google-auth.service';
 import { Public, ResponseMessage } from 'src/decorator/custom';
-import { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
+import { Request, Response } from 'express';
 
 @Controller('auth/google')
 export class GoogleAuthController {
   constructor(private readonly googleAuthService: GoogleAuthService) {}
 
-  @Post()
+  @Get()
   @Public()
-  @ResponseMessage('Google login success')
-  async googleLogin(@Body('token') token: string) {
-    // Pass the token string directly to loginOrSignup
-    return this.googleAuthService.loginOrSignup(token);
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // This will redirect to Google login page
   }
 
   @Get('callback')
   @Public()
+  @UseGuards(AuthGuard('google'))
   @ResponseMessage('Google login success')
-  async googleCallback(@Query('code') code: string, @Res() res: Response) {
-    const token = await this.googleAuthService.getGoogleOAuthToken(code);
-    // Pass the token string directly to loginOrSignup
-    const { access_token } = await this.googleAuthService.loginOrSignup(token);
-    // Redirect to your frontend application with the access token
-    return res.redirect(`http://localhost:3000?token=${access_token}`);
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const user = req.user;
+    const { access_token } = await this.googleAuthService.loginOrSignup(user);
+    // Trả về thông tin người dùng dưới dạng JSON
+    return res.json({ user, access_token });
   }
 }

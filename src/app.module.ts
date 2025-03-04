@@ -14,6 +14,8 @@ import { MatchModule } from './modules/match/match.module';
 import { AuthModule } from './auth/auth.module';
 import { TeamModule } from './modules/team/team.module';
 
+
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -66,7 +68,7 @@ import { TeamModule } from './modules/team/team.module';
     MatchModule,
     AuthModule,
     StoreModule,
-    TeamModule,
+    TeamModule
   ],
   controllers: [AppController],
   providers: [

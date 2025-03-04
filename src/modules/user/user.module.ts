@@ -10,8 +10,8 @@ import { MailModule } from 'src/mail/mail.module';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MailModule,
   ],
-  providers: [UserService],
   controllers: [UserController],
+  providers: [UserService],
   exports: [UserService],
 })
 export class UserModule {}

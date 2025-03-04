@@ -13,6 +13,7 @@ import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@modules/user/entities/user.schema';
+import { GoogleStrategy } from './passport/google.strategy';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { User, UserSchema } from '@modules/user/entities/user.schema';
     PassportModule,
   ],
   controllers: [AuthController, GoogleAuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy],
   exports: [JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

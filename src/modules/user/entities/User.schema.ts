@@ -16,7 +16,7 @@ export class User extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
+  @Prop({default: 'avatar.png'})
   avatar: string;
 
   @Prop()

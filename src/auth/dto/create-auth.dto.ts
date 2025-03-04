@@ -10,6 +10,8 @@ export class CreateAuthDto {
   })
   name: string;
 
+  avatar: string;
+
   @IsNotEmpty({ message: 'Email is required' })
   @ApiProperty({
     example: 'thuan@example.com',

@@ -8,4 +8,7 @@ export class GoogleAuthDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
+
+  @IsString()
+  avatar: string;
 }
