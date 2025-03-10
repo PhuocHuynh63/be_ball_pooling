@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, IsArray, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Types } from 'mongoose';
 
 export class CreatePoolTableDto {
  

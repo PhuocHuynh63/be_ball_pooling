@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { PoolTable } from './entities/poolTable.schema';
 import { CreatePoolTableDto } from './dto/create-pooltable.dto';
 import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
@@ -10,19 +10,24 @@ import * as QRCode from 'qrcode';
 @Injectable()
 export class PoolTableService {
   constructor(
-    @InjectModel(PoolTable.name) private readonly poolTableModel: Model<PoolTable>,
+    @InjectModel(PoolTable.name) private poolTableModel: Model<PoolTable>,
     private readonly uploadService: UploadService
   ) {}
   
    //#region create
    async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
+    const {...payload} = createPoolTableDto;
     try {
       // Lưu bàn bi-a vào cơ sở dữ liệu
-      const createdPoolTable = new this.poolTableModel(createPoolTableDto);
+      const createdPoolTable = await this.poolTableModel.create({
+          ...payload,
+          store: new Types.ObjectId(payload.store)
+        })
+      
       const savedPoolTable = await createdPoolTable.save();
 
       // Tạo mã QR từ ID của bàn bi-a
-      const qrCodeData = savedPoolTable._id.toString();
+      const qrCodeData = savedPoolTable._id;
 
       const teamWaitingRoomUrl = `https://fewebballpooling.vercel.app/team-waiting-room/${qrCodeData}`;
       
