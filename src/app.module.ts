@@ -14,8 +14,7 @@ import { MatchModule } from './modules/match/match.module';
 import { AuthModule } from './auth/auth.module';
 import { TeamModule } from './modules/team/team.module';
 import { UploadModule } from './upload/upload.module';
-
-
+import { GameModule } from './gateways/game.module';
 
 @Module({
   imports: [
@@ -70,7 +69,8 @@ import { UploadModule } from './upload/upload.module';
     AuthModule,
     StoreModule,
     TeamModule,
-    UploadModule
+    UploadModule,
+    GameModule
   ],
   controllers: [AppController],
   providers: [

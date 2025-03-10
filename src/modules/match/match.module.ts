@@ -14,5 +14,6 @@ import { PoolTableModule } from '../pooltable/pooltable.module';
   ],
   providers: [MatchService],
   controllers: [MatchController],
+  exports: [MongooseModule],
 })
 export class MatchModule {}
