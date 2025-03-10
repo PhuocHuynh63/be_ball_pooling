@@ -31,7 +31,6 @@ export class UpdateStoreDto {
   })
   manager?: string;
 
-
   @IsNotEmpty()
   @IsOptional()
   @ApiPropertyOptional({
