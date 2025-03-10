@@ -21,8 +21,8 @@ export class GoogleAuthController {
   @ResponseMessage('Google login success')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const user = req.user;
-    const { access_token } = await this.googleAuthService.loginOrSignup(user);
+    const { access_token_jwt } = await this.googleAuthService.loginOrSignup(user);
     // Trả về thông tin người dùng dưới dạng JSON
-    return res.json({ user, access_token });
+    return res.json({ user, access_token_jwt });
   }
 }

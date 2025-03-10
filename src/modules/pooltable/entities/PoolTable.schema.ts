@@ -4,7 +4,7 @@ import { Store } from '../../store/entities/store.schema';
 
 @Schema()
 export class PoolTable extends Document {
-  @Prop({ unique: true })
+  @Prop()
   qrCodeImg: string;
 
   @Prop({ required: true })

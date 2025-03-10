@@ -48,8 +48,11 @@ export class StoreService {
       const createdStore = new this.storeModel({
         ...createStoreDto,
         address: trimmedAddress,
+        manager: new Types.ObjectId(createStoreDto.manager)
       });
       return await createdStore.save();
+
+  
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error
         throw new ConflictException('Store with this address already exists');

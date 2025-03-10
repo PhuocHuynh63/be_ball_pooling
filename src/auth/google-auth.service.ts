@@ -24,7 +24,7 @@ export class GoogleAuthService {
     );
   }
 
-  async loginOrSignup(user: any): Promise<{ user: User; access_token: string }> {
+  async loginOrSignup(user: any): Promise<{ user: User; access_token_jwt: string }> {
     const googleAuthDto: GoogleAuthDto = {
       name: user.name,
       email: user.email,
@@ -49,6 +49,6 @@ export class GoogleAuthService {
       sub: existingUser._id,
       role: existingUser.role,
     });
-    return { user: existingUser, access_token: accessToken };
+    return { user: existingUser, access_token_jwt: accessToken };
   }
 }
