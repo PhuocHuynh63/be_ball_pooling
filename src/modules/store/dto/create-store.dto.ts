@@ -33,4 +33,5 @@ export class CreateStoreDto {
     description: 'Manager ID of the store',
   })
   readonly manager: string;
+  
 }

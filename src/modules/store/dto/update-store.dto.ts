@@ -31,14 +31,14 @@ export class UpdateStoreDto {
   })
   manager?: string;
 
-  @IsString()
+
   @IsNotEmpty()
   @IsOptional()
   @ApiPropertyOptional({
-    example: 'closed',
+    example: false,
     description: 'Status of the store',
   })
-  status?: string;
+  isDeleted: boolean;
 
   @IsString()
   @IsNotEmpty()

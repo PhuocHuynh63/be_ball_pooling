@@ -25,11 +25,11 @@ export class UploadService {
   //#endregion
 
   //#region uploadImage 
-  async uploadImage(file: Express.Multer.File, oldImageUrl?: string): Promise<string> {
+  async uploadImage(file: Express.Multer.File, folder: string, oldImageUrl?: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const uploadNewImage = () => {
         this.cloudinary.uploader.upload_stream(
-          { folder: 'avatars' }, // Lưu vào thư mục 'avatars'
+          { folder }, // Lưu vào thư mục được chỉ định
           (error, result: UploadApiResponse) => {
             if (error) return reject(error);
             if (result.secure_url === oldImageUrl) {
@@ -42,7 +42,7 @@ export class UploadService {
   
       if (oldImageUrl) {
         const publicId = oldImageUrl.split('/').pop().split('.')[0]; // Lấy public_id từ URL ảnh cũ
-        this.cloudinary.uploader.destroy(`avatars/${publicId}`, (error, result) => {
+        this.cloudinary.uploader.destroy(`${folder}/${publicId}`, (error, result) => {
           if (error) {
             console.error('Error deleting old image:', error);
             return reject(error);

@@ -5,6 +5,9 @@ import { StoreController } from './store.controller';
 import { Store, StoreSchema } from './entities/store.schema';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from '../user/user.module';
+import { RolesGuard } from 'src/auth/passport/roles.guard';
+import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
+import { UserService } from '@modules/user/user.service';
 
 @Module({
   imports: [
@@ -12,7 +15,7 @@ import { UserModule } from '../user/user.module';
     AuthModule,
     UserModule,
   ],
-  providers: [StoreService],
+  providers: [StoreService, RolesGuard, JwtAuthGuard],
   controllers: [StoreController],
   exports: [StoreService],
 })

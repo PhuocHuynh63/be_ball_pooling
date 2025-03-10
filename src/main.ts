@@ -8,17 +8,22 @@ import * as https from 'https';
 import * as passport from 'passport';
 
 async function bootstrap() {
+
+  
 //   const httpsOptions = {
 //     pfx: fs.readFileSync('src/config/keystore.p12'),
 
 //     // pfx: fs.readFileSync('dist/config/keystore.p12'),
 //     passphrase: '123123123',
 //   };
-  const app = await NestFactory.create(AppModule);
 
   // const app = await NestFactory.create(AppModule, {
   //   httpsOptions,
   // });
+
+
+  const app = await NestFactory.create(AppModule);
+
 
   app.use(passport.initialize()); 
   const configService = app.get(ConfigService);

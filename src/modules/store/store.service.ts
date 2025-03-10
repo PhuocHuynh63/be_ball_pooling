@@ -1,16 +1,18 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Store } from './entities/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { UserService } from '../user/user.service';
-import { UserRole } from '../user/entities/user.schema';
+import { UserRoles } from 'src/constant/users.enums';
+import { User } from '@modules/user/entities/user.schema';
 
 @Injectable()
 export class StoreService {
   constructor(
     @InjectModel(Store.name) private storeModel: Model<Store>,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly userService: UserService,
   ) {}
 
@@ -21,7 +23,7 @@ export class StoreService {
     if (!manager) {
       throw new BadRequestException('Manager does not exist');
     }
-    if (manager.role !== UserRole.MANAGER) {
+    if (manager.role !== UserRoles.MANAGER) {
       throw new BadRequestException('User is not a manager');
     }
 
@@ -57,18 +59,6 @@ export class StoreService {
   }
   //#endregion
 
-  //#region findAll
-  async findAll(): Promise<Store[]> {
-    return this.storeModel.find().exec();
-  }
-  //#endregion
-  
-  //#region findOne
-  async findOne(id: string): Promise<Store> {
-    return this.storeModel.findById(id).exec();
-  }
-  //#endregion
-
   //#region update
   async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store> {
     const existingStore = await this.storeModel.findById(id).exec();
@@ -81,7 +71,7 @@ export class StoreService {
       if (!manager) {
         throw new BadRequestException('Manager does not exist');
       }
-      if (manager.role !== UserRole.MANAGER) {
+      if (manager.role !== UserRoles.MANAGER) {
         throw new BadRequestException('User is not a manager');
       }
 
@@ -143,4 +133,37 @@ export class StoreService {
     }
   }
   //#endregion
+
+  //#region findAll
+  async findAll(): Promise<Store[]> {
+    return this.storeModel.find().exec();
+  }
+  //#endregion
+  
+  //#region findOne
+  async findOne(id: string): Promise<Store> {
+    return this.storeModel.findById(id).exec();
+  }
+  //#endregion
+
+  //#region findManagersWithoutStore
+  async findManagersWithoutStore(): Promise<User[]> {
+    const allManagers = await this.userModel.find({ role: UserRoles.MANAGER }).exec();
+  
+    const managersWithStore: Types.ObjectId[] = (await this.storeModel.find().distinct('manager')) as Types.ObjectId[];
+  
+    // Lọc danh sách manager chưa có store
+    const managersWithoutStore = allManagers.filter(manager =>
+      !managersWithStore.some(managerWithStore =>
+        new Types.ObjectId(managerWithStore).equals(manager._id.toString())
+      )
+    );
+  
+    return managersWithoutStore;
+  }
+  //#endregion
+
+
+
+
 }
