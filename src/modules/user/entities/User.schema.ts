@@ -1,11 +1,7 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { UserRoles } from 'src/constant/users.enums';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  MANAGER = 'manager',
-}
 
 export type AuthProvider = 'local' | 'google';
 
@@ -30,8 +26,8 @@ export class User extends Document {
   })
   password: string;
 
-  @Prop({ required: true, enum: UserRole })
-  role: UserRole;
+  @Prop({ required: true })
+  role: UserRoles;
 
   @Prop({ default: 'active' })
   status: string;

@@ -3,13 +3,17 @@ import { PoolTableService } from './pooltable.service';
 import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { CreatePoolTableDto } from './dto/create-pooltable.dto';
+import { Roles } from 'src/decorator/role.decorator';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Controller('pooltables')
+@UseGuards(RolesGuard)
 export class PoolTableController {
   constructor(private readonly poolTableService: PoolTableService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  
   @Post()
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   async create(@Body() createPoolTableDto: CreatePoolTableDto) {
     return this.poolTableService.create(createPoolTableDto);
   }
@@ -31,4 +35,5 @@ export class PoolTableController {
   async delete(@Param('id') id: string) {
     return this.poolTableService.delete(id);
   }
+
 }

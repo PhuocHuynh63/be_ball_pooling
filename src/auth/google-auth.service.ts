@@ -4,8 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserRole } from '@modules/user/entities/user.schema';
+import { User } from '@modules/user/entities/user.schema';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Injectable()
 export class GoogleAuthService {
@@ -37,7 +38,7 @@ export class GoogleAuthService {
         avatar: googleAuthDto.avatar,
         password: '', // Dummy empty password
         phone: '',
-        role: UserRole.USER,
+        role: UserRoles.USER,
         status: 'active',
         authProvider: 'google', // Explicitly set as google
       });

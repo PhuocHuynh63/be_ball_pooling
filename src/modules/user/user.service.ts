@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException, UseGuards } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -9,8 +9,10 @@ import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
 import { updateUsersDto } from './dto/update-user.dto';
 import { UploadService } from 'src/upload/upload.service';
+import { RolesGuard } from 'src/auth/passport/roles.guard';
 
 @Injectable()
+@UseGuards(RolesGuard)
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
