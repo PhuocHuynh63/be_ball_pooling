@@ -7,6 +7,7 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 import { UserService } from '../user/user.service';
 import { UserRoles } from 'src/constant/users.enums';
 import { User } from '@modules/user/entities/user.schema';
+import { FindStoreDto } from './dto/store.dto';
 
 @Injectable()
 export class StoreService {
@@ -14,7 +15,51 @@ export class StoreService {
     @InjectModel(Store.name) private storeModel: Model<Store>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly userService: UserService,
-  ) {}
+  ) { }
+
+  //#region findStoreBySearchOrFilter
+  async findStoreBySearchOrFilter(query: FindStoreDto) {
+    //#region Pagination
+    const currentPage = query.current ? Number(query.current) : 1;
+    const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
+    let skip = (currentPage - 1) * pageSizePage;
+    //#endregion
+
+    //#region Filter
+    const filter: any = {};
+    if (query.term) {
+      filter.term = { term: new RegExp(query.term, 'i') };
+    }
+    //#endregion
+
+    //#region Sort
+    const sort: any = {};
+    sort[query.sortBy] = query.sortDirection === 'asc' ? 1 : -1;
+    //#endregion
+
+    const [result, totalItem] = await Promise.all([
+      this.storeModel
+        .find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(pageSizePage)
+        .lean(),
+      this.storeModel.countDocuments(filter)
+    ]);
+
+    const totalPage = Math.ceil(totalItem / pageSizePage);
+
+    return {
+      data: result,
+      pagination: {
+        currentPage: currentPage,
+        pageSize: pageSizePage,
+        totalPage: totalPage,
+        totalItem: totalItem,
+      }
+    };
+  }
+  //#endregion
 
   //#region create
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
@@ -52,7 +97,7 @@ export class StoreService {
       });
       return await createdStore.save();
 
-  
+
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error
         throw new ConflictException('Store with this address already exists');
@@ -68,7 +113,7 @@ export class StoreService {
     if (!existingStore) {
       throw new NotFoundException('Store not found');
     }
-  
+
     if (updateStoreDto.manager) {
       const manager = await this.userService.findOne(updateStoreDto.manager);
       if (!manager) {
@@ -79,15 +124,15 @@ export class StoreService {
       }
 
       // Check that this manager is not already assigned to a different store
-      const managerStore = await this.storeModel.findOne({ 
-        manager: updateStoreDto.manager, 
-        _id: { $ne: id } 
+      const managerStore = await this.storeModel.findOne({
+        manager: updateStoreDto.manager,
+        _id: { $ne: id }
       }).exec();
       if (managerStore) {
         throw new ConflictException('Manager already manages another store');
       }
     }
-  
+
     Object.assign(existingStore, updateStoreDto);
     try {
       return await existingStore.save();
@@ -106,16 +151,16 @@ export class StoreService {
       const softDeleteStore = await this.storeModel.findByIdAndUpdate(
         id,
         [
-          { 
-            $set: { 
+          {
+            $set: {
               isDeleted: { $not: "$isDeleted" },
               deletedAt: { $cond: { if: { $eq: ["$isDeleted", false] }, then: new Date(), else: null } }
-            } 
+            }
           }
         ],
         { new: true }
       ).exec();
-  
+
       if (!softDeleteStore) {
         throw new NotFoundException(`No data found for id ${id}`);
       }
@@ -142,7 +187,7 @@ export class StoreService {
     return this.storeModel.find().exec();
   }
   //#endregion
-  
+
   //#region findOne
   async findOne(id: string): Promise<Store> {
     return this.storeModel.findById(id).exec();
@@ -152,21 +197,18 @@ export class StoreService {
   //#region findManagersWithoutStore
   async findManagersWithoutStore(): Promise<User[]> {
     const allManagers = await this.userModel.find({ role: UserRoles.MANAGER }).exec();
-  
+
     const managersWithStore: Types.ObjectId[] = (await this.storeModel.find().distinct('manager')) as Types.ObjectId[];
-  
+
     // Lọc danh sách manager chưa có store
     const managersWithoutStore = allManagers.filter(manager =>
       !managersWithStore.some(managerWithStore =>
         new Types.ObjectId(managerWithStore).equals(manager._id.toString())
       )
     );
-  
+
     return managersWithoutStore;
   }
   //#endregion
-
-
-
 
 }
