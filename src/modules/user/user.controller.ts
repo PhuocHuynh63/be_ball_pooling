@@ -7,9 +7,13 @@ import { UploadService } from 'src/upload/upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { RolesGuard } from 'src/auth/passport/roles.guard';
 
 
 @Controller('users')
+@UseGuards(RolesGuard)
+@ApiBearerAuth('access-token')
 export class UserController {
   constructor(private readonly userService: UserService, 
               private readonly uploadService: UploadService
@@ -17,8 +21,18 @@ export class UserController {
 
   @Get('find')
   @Roles(UserRoles.ADMIN)
+  @ApiQuery({ name: 'id', required: false, type: String })
+  @ApiQuery({ name: 'role', required: false, type: String })  // cho swagger
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'email', required: false, type: String })
   async find(@Query() query: any) {
     return await this.userService.find(query);
+  }
+
+  @Get(':id')
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  async findId(@Param('id') id: string) {
+    return await this.userService.findOne(id);
   }
   
   @Roles(UserRoles.ADMIN, UserRoles.USER)

@@ -5,9 +5,11 @@ import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { CreatePoolTableDto } from './dto/create-pooltable.dto';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('pooltables')
 @UseGuards(RolesGuard)
+@ApiBearerAuth('access-token')
 export class PoolTableController {
   constructor(private readonly poolTableService: PoolTableService) {}
 
