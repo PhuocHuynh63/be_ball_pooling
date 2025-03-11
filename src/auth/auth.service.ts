@@ -41,14 +41,10 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
-
+  
   //tạo user bth
-  async handleRegister(registerDto: CreateAuthDto) {
-    if (!Object.values(UserRoles).includes(registerDto.role)) {
-      throw new BadRequestException('Only user role can be assigned during registration');
-    }
-    try {
-     
+  async handleRegister(registerDto: CreateAuthDto) {   
+    try {    
       return await this.userService.createUser({
         ...registerDto,
       });

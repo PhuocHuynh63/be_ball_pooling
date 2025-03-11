@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Request, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, Request, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public, ResponseMessage } from 'src/decorator/custom';
 import { LocalAuthGuard } from './passport/local-auth.guard';
@@ -6,6 +6,7 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +26,13 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  register(@Body() registerDto: CreateAuthDto) {
+  async register(@Body() registerDto: CreateAuthDto) {
+    if (registerDto.role === UserRoles.ADMIN) {
+      throw new BadRequestException('Cannot register as ADMIN');
+    }
     return this.authService.handleRegister(registerDto);
   }
+
+
+
 }
