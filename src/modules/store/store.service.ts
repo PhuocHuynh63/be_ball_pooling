@@ -28,7 +28,7 @@ export class StoreService {
     //#region Filter
     const filter: any = {};
     if (query.term) {
-      filter.term = { term: new RegExp(query.term, 'i') };
+      filter.name = new RegExp(query.term, 'i');
     }
     //#endregion
 
