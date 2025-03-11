@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GameGateway } from './game.gateway';
+import { GameService } from '../services/game/game.service'; // adjust the path if needed
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -24,6 +25,6 @@ import { UserModule } from '@modules/user/user.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [GameGateway],
+  providers: [GameGateway, GameService],
 })
-export class GameModule {}
+export class GameModule { }
