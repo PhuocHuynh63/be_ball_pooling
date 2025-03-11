@@ -153,7 +153,7 @@ export class UserService {
     return {
       data: result,
       pagination: {
-        currentPage: currentPage,
+        current: currentPage,
         pageSize: pageSizePage,
         totalPage: totalPage,
         totalItem: totalItem,
