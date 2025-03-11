@@ -23,12 +23,6 @@ export class StoreController {
     return this.storeService.findStoreBySearchOrFilter(query);
   }
 
-  @Post()
-  @Roles(UserRoles.ADMIN)
-  async create(@Body() createStoreDto: CreateStoreDto) {
-    return this.storeService.create(createStoreDto);
-  }
-
   @Roles(UserRoles.ADMIN)
   @Get()
   async handleGetRequests(@Query('action') action: string, @Query('id') id?: string) {
