@@ -14,13 +14,6 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
- 
-  @Post()
-  @Roles(UserRoles.ADMIN)
-  async create(@Body() createStoreDto: CreateStoreDto) {
-    return this.storeService.create(createStoreDto);
-  }
-
   @Roles(UserRoles.ADMIN)
   @Get()
   async handleGetRequests(@Query('action') action: string, @Query('id') id?: string) {
@@ -38,6 +31,14 @@ export class StoreController {
         throw new BadRequestException('Invalid action');
     }
   }
+  
+
+  @Post()
+  @Roles(UserRoles.ADMIN)
+  async create(@Body() createStoreDto: CreateStoreDto) {
+    return this.storeService.create(createStoreDto);
+  }
+
 
   @Roles(UserRoles.ADMIN)
   @Put(':id')
