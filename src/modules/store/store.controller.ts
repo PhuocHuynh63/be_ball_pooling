@@ -7,12 +7,27 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ResponseMessage } from 'src/decorator/custom';
+import { FindStoreDto } from './dto/store.dto';
 
 @Controller('stores')
 @UseGuards(RolesGuard)
 @ApiBearerAuth('access-token')
 export class StoreController {
-  constructor(private readonly storeService: StoreService) {}
+  constructor(private readonly storeService: StoreService) { }
+
+  @Get('search')
+  @Roles(UserRoles.ADMIN)
+  @ResponseMessage('Get stores success')
+  async findStoreBySearchOrFilter(@Query() query: FindStoreDto) {
+    return this.storeService.findStoreBySearchOrFilter(query);
+  }
+
+  @Post()
+  @Roles(UserRoles.ADMIN)
+  async create(@Body() createStoreDto: CreateStoreDto) {
+    return this.storeService.create(createStoreDto);
+  }
 
   @Roles(UserRoles.ADMIN)
   @Get()
@@ -51,9 +66,5 @@ export class StoreController {
   async delete(@Param('id') id: string) {
     return this.storeService.delete(id);
   }
-
-
-  
-  
 
 }

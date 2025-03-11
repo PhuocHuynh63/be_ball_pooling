@@ -1,30 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsNumber, Min, Max, Matches } from 'class-validator';
 
-export class FindUserDto {
+export class FindStoreDto {
     @IsOptional()
     @IsString()
     @ApiProperty({
         example: 'Thuan',
-        description: 'Name of the user or phone number or email',
+        description: 'Search by name',
     })
     term?: string;
 
     @IsOptional()
     @IsString()
     @ApiProperty({
-        example: 'user',
-        description: 'Role of the user',
+        example: 'false',
+        description: 'Filter by isDeleted',
     })
-    role?: string;
-
-    @IsOptional()
-    @IsString()
-    @ApiProperty({
-        example: 'active',
-        description: 'Status of the user account',
-    })
-    status?: string;
+    isDeleted?: boolean;
 
     @IsOptional()
     @ApiProperty({
