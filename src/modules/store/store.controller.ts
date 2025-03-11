@@ -46,6 +46,14 @@ export class StoreController {
         throw new BadRequestException('Invalid action');
     }
   }
+  
+
+  @Post()
+  @Roles(UserRoles.ADMIN)
+  async create(@Body() createStoreDto: CreateStoreDto) {
+    return this.storeService.create(createStoreDto);
+  }
+
 
   @Roles(UserRoles.ADMIN)
   @Put(':id')

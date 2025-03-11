@@ -30,4 +30,5 @@ export class CreatePoolTableDto {
   @IsNotEmpty()
   @IsMongoId()
   readonly store: string;
+  
 }

@@ -1,14 +1,11 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 import { UserRoles } from 'src/constant/users.enums';
 
 
 export type AuthProvider = 'local' | 'google';
 
-@Schema({
-  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
-})
-export class User extends Document {
+@Schema({ timestamps: true,})
+export class User{
   @Prop({ required: true })
   name: string;
 
@@ -26,7 +23,7 @@ export class User extends Document {
   })
   password: string;
 
-  @Prop({ required: true })
+  @Prop({ default: UserRoles.USER })
   role: UserRoles;
 
   @Prop({ default: 'active' })
