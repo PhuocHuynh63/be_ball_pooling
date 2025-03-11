@@ -6,9 +6,11 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('stores')
 @UseGuards(RolesGuard)
+@ApiBearerAuth('access-token')
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 

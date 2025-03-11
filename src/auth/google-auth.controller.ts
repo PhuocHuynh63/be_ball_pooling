@@ -22,7 +22,9 @@ export class GoogleAuthController {
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const user = req.user;
     const { access_token_jwt } = await this.googleAuthService.loginOrSignup(user);
-    // Trả về thông tin người dùng dưới dạng JSON
-    return res.json({ user, access_token_jwt });
-  }
+
+    // Chuyển hướng đến trang HomePage kèm theo dữ liệu
+    const redirectUrl = `http://localhost:3000/HomePage?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
+    return res.redirect(redirectUrl);
+  }s
 }
