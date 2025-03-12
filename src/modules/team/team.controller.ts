@@ -32,6 +32,18 @@ export class TeamController {
     return this.teamService.findMembers(id);
   }
 
+  @Get('/match/member/:id')
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  async getMatchByMember(@Param('id') id: string) {
+    return this.teamService.findMatchByMember(id);
+  }
+
+  @Get('/match/:id')
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  async getMatch(@Param('id') id: string) {
+    return this.teamService.findTeamByMatch(id);
+  }
+
   @Post()
   @Roles(UserRoles.ADMIN, UserRoles.USER)
   async create(@Body() createTeamDto: CreateTeamDto) {
