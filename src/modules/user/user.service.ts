@@ -57,6 +57,17 @@ export class UserService {
   }
   //#endregion
 
+  //#region delete
+  async delete(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.status = 'inactive'; // Set status to inactive for soft deletion
+    return user.save();
+  }
+  //#endregion
+
   //#region findAll
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -105,6 +116,7 @@ export class UserService {
 
   //#region findUserBySearchOrFilter
   async findUserBySearchOrFilter(query: FindUserDto) {
+
     //#region Pagination
     const currentPage = query.current ? Number(query.current) : 1;
     const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
@@ -160,6 +172,7 @@ export class UserService {
       }
     }
   }
+  //#endregion
 
   //#region findOne
   async findOne(id: string): Promise<User> {
@@ -262,17 +275,6 @@ export class UserService {
     user.password = hashedPassword;
     await user.save();
     return { message: 'Password reset successful' };
-  }
-  //#endregion
-
-  //#region delete
-  async delete(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    user.status = 'inactive'; // Set status to inactive for soft deletion
-    return user.save();
   }
   //#endregion
 

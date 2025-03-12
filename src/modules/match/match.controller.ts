@@ -1,15 +1,17 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Put, Query } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
+import { FindMatchDto } from './dto/find-match.dto';
 
 @Controller('matches')
 export class MatchController {
   constructor(private readonly matchService: MatchService) { }
 
-  @Post()
-  async create(@Body() createMatchDto: CreateMatchDto) {
-    return this.matchService.create(createMatchDto);
+
+  @Get('search')
+  async searchMatch(@Query() query: FindMatchDto) {
+    return this.matchService.findMatchBySearchOrFilter(query);
   }
 
   @Get()
@@ -22,7 +24,13 @@ export class MatchController {
     return this.matchService.findOne(id);
   }
 
-  @Patch(':id')
+
+  @Post()
+  async create(@Body() createMatchDto: CreateMatchDto) {
+    return this.matchService.create(createMatchDto);
+  }
+
+  @Put(':id')
   async update(@Param('id') id: string, @Body() updateMatchDto: UpdateMatchDto) {
     return this.matchService.update(id, updateMatchDto);
   }
@@ -31,5 +39,6 @@ export class MatchController {
   async delete(@Param('id') id: string) {
     return this.matchService.delete(id);
   }
+
 
 }

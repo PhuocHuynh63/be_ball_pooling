@@ -17,50 +17,6 @@ export class StoreService {
     private readonly userService: UserService,
   ) { }
 
-  //#region findStoreBySearchOrFilter
-  async findStoreBySearchOrFilter(query: FindStoreDto) {
-    //#region Pagination
-    const currentPage = query.current ? Number(query.current) : 1;
-    const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
-    let skip = (currentPage - 1) * pageSizePage;
-    //#endregion
-
-    //#region Filter
-    const filter: any = {};
-    if (query.term) {
-      filter.name = new RegExp(query.term, 'i');
-    }
-    //#endregion
-
-    //#region Sort
-    const sort: any = {};
-    sort[query.sortBy] = query.sortDirection === 'asc' ? 1 : -1;
-    //#endregion
-
-    const [result, totalItem] = await Promise.all([
-      this.storeModel
-        .find(filter)
-        .sort(sort)
-        .skip(skip)
-        .limit(pageSizePage)
-        .lean(),
-      this.storeModel.countDocuments(filter)
-    ]);
-
-    const totalPage = Math.ceil(totalItem / pageSizePage);
-
-    return {
-      data: result,
-      pagination: {
-        currentPage: currentPage,
-        pageSize: pageSizePage,
-        totalPage: totalPage,
-        totalItem: totalItem,
-      }
-    };
-  }
-  //#endregion
-
   //#region create
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
     // Check if the manager exists and has the role of manager
@@ -179,6 +135,51 @@ export class StoreService {
       }
       throw new Error('Error');
     }
+  }
+  //#endregion
+
+
+   //#region findStoreBySearchOrFilter
+   async findStoreBySearchOrFilter(query: FindStoreDto) {
+    //#region Pagination
+    const currentPage = query.current ? Number(query.current) : 1;
+    const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
+    let skip = (currentPage - 1) * pageSizePage;
+    //#endregion
+
+    //#region Filter
+    const filter: any = {};
+    if (query.term) {
+      filter.name = new RegExp(query.term, 'i');
+    }
+    //#endregion
+
+    //#region Sort
+    const sort: any = {};
+    sort[query.sortBy] = query.sortDirection === 'asc' ? 1 : -1;
+    //#endregion
+
+    const [result, totalItem] = await Promise.all([
+      this.storeModel
+        .find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(pageSizePage)
+        .lean(),
+      this.storeModel.countDocuments(filter)
+    ]);
+
+    const totalPage = Math.ceil(totalItem / pageSizePage);
+
+    return {
+      data: result,
+      pagination: {
+        currentPage: currentPage,
+        pageSize: pageSizePage,
+        totalPage: totalPage,
+        totalItem: totalItem,
+      }
+    };
   }
   //#endregion
 
