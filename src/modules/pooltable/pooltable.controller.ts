@@ -20,7 +20,7 @@ export class PoolTableController {
     return this.poolTableService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER, UserRoles.USER)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.poolTableService.findOne(id);

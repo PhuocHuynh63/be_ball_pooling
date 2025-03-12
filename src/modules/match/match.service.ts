@@ -25,6 +25,14 @@ export class MatchService {
     if (!poolTable) {
       throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} does not exist`);
     }
+    if (poolTable.status !== 'available') {
+      throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} is not available`);
+    }
+
+    const mode_game = poolTable.tableType.compatible_mode;
+    if (!mode_game.includes(createMatchDto.mode_game)) {
+      throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} is not compatible with mode ${mode_game}`);
+    }
 
     const createdMatch = new this.matchModel({
       ...createMatchDto,
@@ -58,8 +66,7 @@ export class MatchService {
     return match.save();
   }
   //#endregion
-
-
+d
   //#region findAll
   async findAll(): Promise<Match[]> {
     return this.matchModel.find({ deletedAt: null }).exec();

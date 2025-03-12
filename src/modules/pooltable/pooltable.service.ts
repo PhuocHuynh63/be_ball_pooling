@@ -12,25 +12,25 @@ export class PoolTableService {
   constructor(
     @InjectModel(PoolTable.name) private poolTableModel: Model<PoolTable>,
     private readonly uploadService: UploadService
-  ) {}
-  
-   //#region create
-   async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
-    const {...payload} = createPoolTableDto;
+  ) { }
+
+  //#region create
+  async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
+    const { ...payload } = createPoolTableDto;
     try {
       // Lưu bàn bi-a vào cơ sở dữ liệu
       const createdPoolTable = await this.poolTableModel.create({
-          ...payload,
-          store: new Types.ObjectId(payload.store)
-        })
-      
+        ...payload,
+        store: new Types.ObjectId(payload.store)
+      })
+
       const savedPoolTable = await createdPoolTable.save();
 
       // Tạo mã QR từ ID của bàn bi-a
       const qrCodeData = savedPoolTable._id;
 
-      const teamWaitingRoomUrl = `https://fewebballpooling.vercel.app/team-waiting-room/${qrCodeData}`;
-      
+      const teamWaitingRoomUrl = `https://fewebballpooling.vercel.app/team-waiting-room/tableId=${qrCodeData}`;
+
       const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
 
       // Lưu mã QR vào Cloudinary
@@ -39,7 +39,7 @@ export class PoolTableService {
         originalname: `${qrCodeData}-qrcode.png`,
       } as Express.Multer.File, 'qrcodes');
 
-      
+
       // Cập nhật URL của mã QR vào cơ sở dữ liệu
       savedPoolTable.qrCodeImg = uploadResult;
       await savedPoolTable.save();
@@ -130,5 +130,5 @@ export class PoolTableService {
   }
   //#endregion
 
-  
+
 }
