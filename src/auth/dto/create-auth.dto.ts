@@ -36,9 +36,10 @@ export class CreateAuthDto {
 
   @IsOptional()
   @ApiProperty({
-    example: 'manager',
+    example: 'manager || if do not push already user',
     description: 'Role for the manager, if do not push already user ',
     enum: UserRoles,
+    required: false,
   })
   role: UserRoles;
 
@@ -46,6 +47,7 @@ export class CreateAuthDto {
   @ApiProperty({
     example: 'active',
     description: 'Current status of the user account',
+    required: false,
   })
   status: string;
 
@@ -56,6 +58,7 @@ export class CreateAuthDto {
     description: 'Authentication provider for the user',
     enum: ['local', 'google'],
     default: 'local',
+    required: false,
   })
   authProvider?: 'local' | 'google';
 }
