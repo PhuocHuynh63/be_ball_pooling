@@ -41,6 +41,20 @@ export class StoreController {
     }
   }
 
+  @Get(':id')
+  @Roles(UserRoles.ADMIN)
+  @ResponseMessage('Get stores success')
+  async findById(@Param('id') id: string) {
+    return this.storeService.findOne(id);
+  }
+
+  @Get('showDeleted')
+  @Roles(UserRoles.ADMIN)
+  @ResponseMessage('Get stores success')
+  async showDeleted() {
+    return this.storeService.showDeleted();
+  }
+
   @Get('withoutStore')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Get stores success')
