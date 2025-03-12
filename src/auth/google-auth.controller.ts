@@ -6,7 +6,7 @@ import { Request, Response } from 'express';
 
 @Controller('auth/google')
 export class GoogleAuthController {
-  constructor(private readonly googleAuthService: GoogleAuthService) {}
+  constructor(private readonly googleAuthService: GoogleAuthService) { }
 
   @Get()
   @Public()
@@ -23,8 +23,20 @@ export class GoogleAuthController {
     const user = req.user;
     const { access_token_jwt } = await this.googleAuthService.loginOrSignup(user);
 
-    // Chuyển hướng đến trang HomePage kèm theo dữ liệu
-    const redirectUrl = `http://localhost:3000/HomePage?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
-    return res.redirect(redirectUrl);
-  }s
+    // Kiểm tra xem yêu cầu đến từ ứng dụng di động hay không
+    const isMobile = req.headers['user-agent']?.includes('Mobile');
+
+    if (isMobile) {
+      // Trả về dữ liệu JSON cho ứng dụng di động kèm theo URL chuyển hướng
+      const redirectUrl = `http://192.168.1.9:8081/?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
+      return res.json({
+        message: 'Google login success',
+        redirectUrl,
+      });
+    } else {
+      // Chuyển hướng đến trang HomePage kèm theo dữ liệu
+      const redirectUrl = `http://localhost:3000/HomePage?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
+      return res.redirect(redirectUrl);
+    }
+  }
 }
