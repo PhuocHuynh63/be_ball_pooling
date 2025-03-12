@@ -138,9 +138,8 @@ export class StoreService {
   }
   //#endregion
 
-
-   //#region findStoreBySearchOrFilter
-   async findStoreBySearchOrFilter(query: FindStoreDto) {
+  //#region findStoreBySearchOrFilter
+  async findStoreBySearchOrFilter(query: FindStoreDto) {
     //#region Pagination
     const currentPage = query.current ? Number(query.current) : 1;
     const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
@@ -192,6 +191,12 @@ export class StoreService {
   //#region findOne
   async findOne(id: string): Promise<Store> {
     return this.storeModel.findById(id).exec();
+  }
+  //#endregion
+
+  //#region findOne
+  async showDeleted(): Promise<Store[]> {
+    return this.storeModel.find({ isDeleted: true }).exec();
   }
   //#endregion
 

@@ -35,7 +35,7 @@ export class GoogleAuthController {
       });
     } else {
       // Chuyển hướng đến trang HomePage kèm theo dữ liệu
-      const redirectUrl = `http://localhost:3000/HomePage?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
+      const redirectUrl = `https://billiards-score-app.vercel.app/HomePage?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
       return res.redirect(redirectUrl);
     }
   }
