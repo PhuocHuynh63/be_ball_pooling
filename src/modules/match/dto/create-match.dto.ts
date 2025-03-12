@@ -1,10 +1,6 @@
 import { IsNotEmpty, IsString, IsArray, IsMongoId, ValidateNested, IsOptional, IsDate } from 'class-validator';
-import { Type } from 'class-transformer';
 
-class UserDto {
-  @IsMongoId()
-  user: string;
-}
+
 
 export class CreateMatchDto {
  
@@ -20,13 +16,5 @@ export class CreateMatchDto {
   @IsMongoId()
   pooltable: string;
 
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  endAt?: Date;
 
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  deletedAt?: Date;
 }
