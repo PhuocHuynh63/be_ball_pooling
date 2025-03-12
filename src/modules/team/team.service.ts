@@ -68,6 +68,33 @@ export class TeamService {
   }
   //#endregion
 
+  //#region findMatchByMember
+  async findMatchByMember(memberId: string) {
+    if (!Types.ObjectId.isValid(memberId)) {
+      throw new BadRequestException(`Invalid member id '${memberId}'`);
+    }
+
+    const teams = await this.teamModel.find({ members: new Types.ObjectId(memberId) }).lean();
+
+    return teams
+  }
+  //#endregion
+
+  async findTeamByMatch(matchId: string) {
+    if (!Types.ObjectId.isValid(matchId)) {
+      throw new BadRequestException(`Invalid match id '${matchId}'`);
+    }
+
+    const teams = await this.teamModel
+      .find({ match: new Types.ObjectId(matchId) })
+      .populate({ path: 'members', model: 'User', select: 'name' })
+      .populate('match', 'mode_game')
+      .select('name members match result createdAt updatedAt')
+      .lean();
+
+    return teams;
+  }
+
   //#region remove
   async remove(id: string): Promise<Team> {
     const team = await this.teamModel.findByIdAndUpdate(
