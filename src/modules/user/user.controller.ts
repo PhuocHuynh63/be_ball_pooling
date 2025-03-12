@@ -9,7 +9,7 @@ import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
-import { ResponseMessage } from 'src/decorator/custom';
+import { Public, ResponseMessage } from 'src/decorator/custom';
 import { FindUserDto } from './dto/user.dto';
 
 
@@ -21,6 +21,7 @@ export class UserController {
     private readonly uploadService: UploadService
   ) { }
 
+  @Public()
   @Get('find')
   @Roles(UserRoles.ADMIN)
   @ApiQuery({ name: 'id', required: false, type: String })

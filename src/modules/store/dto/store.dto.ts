@@ -7,6 +7,7 @@ export class FindStoreDto {
     @ApiProperty({
         example: 'Thuan',
         description: 'Search by name',
+        required: false,
     })
     term?: string;
 
@@ -15,6 +16,7 @@ export class FindStoreDto {
     @ApiProperty({
         example: 'false',
         description: 'Filter by isDeleted',
+        required: false,
     })
     isDeleted?: boolean;
 
@@ -22,12 +24,14 @@ export class FindStoreDto {
     @ApiProperty({
         example: '1',
         description: 'Current page number',
+        required: false,
     })
     current?: string = '1';
 
     @ApiProperty({
         example: '10',
         description: 'Number of items per page',
+        required: false,
     })
     @IsOptional()
     pageSize?: string = '10';
@@ -38,6 +42,7 @@ export class FindStoreDto {
     @ApiProperty({
         example: 'createdAt',
         description: 'createdAt|updatedAt|name|email|phone|status',
+        required: false,
     })
     sortBy?: string = 'createdAt';
 
@@ -46,6 +51,7 @@ export class FindStoreDto {
     @ApiProperty({
         example: 'desc',
         description: 'asc|desc',
+        required: false,
     })
     sortDirection?: 'asc' | 'desc' = 'desc';
 }

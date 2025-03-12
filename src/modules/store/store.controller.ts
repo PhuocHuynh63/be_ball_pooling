@@ -40,7 +40,14 @@ export class StoreController {
         throw new BadRequestException('Invalid action');
     }
   }
-  
+
+  @Get('withoutStore')
+  @Roles(UserRoles.ADMIN)
+  @ResponseMessage('Get stores success')
+  async findManagersWithoutStore() {
+    return this.storeService.findManagersWithoutStore();
+  }
+
 
   @Post()
   @Roles(UserRoles.ADMIN)
