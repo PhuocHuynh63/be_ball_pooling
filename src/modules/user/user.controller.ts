@@ -21,7 +21,7 @@ export class UserController {
     private readonly uploadService: UploadService
   ) { }
 
-  @Public()
+
   @Get('find')
   @Roles(UserRoles.ADMIN)
   @ApiQuery({ name: 'id', required: false, type: String })
