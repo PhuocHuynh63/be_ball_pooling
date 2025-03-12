@@ -55,7 +55,7 @@ export class StoreController {
     return this.storeService.showDeleted();
   }
 
-  @Get('withoutStore')
+  @Get('/user/withoutStore')
   @Roles(UserRoles.ADMIN)
   @ResponseMessage('Get stores success')
   async findManagersWithoutStore() {
