@@ -8,17 +8,21 @@ import { UserModule } from '../user/user.module';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { UserService } from '@modules/user/user.service';
+import { PoolTableService } from '@modules/pooltable/pooltable.service';
+import { PoolTableModule } from '@modules/pooltable/pooltable.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]),
     AuthModule,
     UserModule,
+    PoolTableModule
   ],
-  providers: [StoreService, RolesGuard, JwtAuthGuard],
+  providers: [StoreService,
+    RolesGuard, JwtAuthGuard],
   controllers: [StoreController],
   exports: [StoreService],
 })
 
 
-export class StoreModule {}
+export class StoreModule { }

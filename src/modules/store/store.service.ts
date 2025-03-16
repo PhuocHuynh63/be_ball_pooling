@@ -8,6 +8,8 @@ import { UserService } from '../user/user.service';
 import { UserRoles } from 'src/constant/users.enums';
 import { User } from '@modules/user/entities/user.schema';
 import { FindStoreDto } from './dto/store.dto';
+import { PoolTableService } from '@modules/pooltable/pooltable.service';
+import { PoolTable } from '@modules/pooltable/entities/poolTable.schema';
 
 @Injectable()
 export class StoreService {
@@ -194,7 +196,7 @@ export class StoreService {
   }
   //#endregion
 
-  //#region findOne
+  //#region showDeleted
   async showDeleted(): Promise<Store[]> {
     return this.storeModel.find({ isDeleted: true }).exec();
   }

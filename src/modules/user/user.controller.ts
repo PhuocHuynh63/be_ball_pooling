@@ -51,15 +51,7 @@ export class UserController {
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto, @UploadedFile() file: Express.Multer.File) {
-    if (file) {
-      console.log('id:', id);
-      const user = await this.userService.findOne(id);
-      const folder = 'avatar';
-      const urlAvatar = await this.uploadService.uploadImage(file, folder, user.avatar);
-      updateUsersDto.avatar = urlAvatar; // Set lại URL vào thuộc tính avatar
-    }
-
-    return await this.userService.updateUser(id, updateUsersDto);
+    return await this.userService.updateUser(id, updateUsersDto, file);
   }
 
 
