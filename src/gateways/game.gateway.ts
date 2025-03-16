@@ -11,12 +11,12 @@ export class GameGateway implements OnGatewayConnection {
   constructor(
     private readonly jwtService: JwtService,
     private readonly gameService: GameService,
-  ) {}
+  ) { }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.headers?.access_token ||
-                  client.handshake.auth?.token ||
-                  client.handshake.query?.token;
+      client.handshake.auth?.token ||
+      client.handshake.query?.token;
 
     if (token) {
       try {
@@ -79,19 +79,83 @@ export class GameGateway implements OnGatewayConnection {
   }
   //#endregion
 
-  //#region leaveRoom
-  @SubscribeMessage('leaveRoom')
-  async handleLeaveRoom(
+  //#region leaveTeam
+  @SubscribeMessage('leaveTeam')
+  async handleLeaveTeam(
     @MessageBody() payload: { teamId: string },
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.userId;
     if (!userId) throw new NotFoundException('Authenticated user id not found');
 
-    const roomId = `match-${await this.gameService.leaveTeam({ teamId: payload.teamId, userId })}`;
+    // Call leaveTeam to remove the user from the current team.
+    // This method does not remove them from the room.
+    const teamInfo = await this.gameService.leaveTeam({ teamId: payload.teamId, userId });
+    this.logger.debug(`User ${userId} left team ${payload.teamId} but remains in the room`);
+    return { event: 'teamLeft', teamId: payload.teamId, info: teamInfo };
+  }
+  //#endregion
+
+  //#region leaveRoom
+  @SubscribeMessage('leaveRoom')
+  async handleLeaveRoom(
+    @MessageBody() payload: { matchId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data.userId;
+    // If the client is not authenticated (a guest), remove their guest info from Redis.
+    if (!userId) {
+      // Assumes roomId is in the format "match-<matchId>"
+      const matchId = payload.matchId.replace('match-', '');
+      await this.gameService.removeGuestInfo(matchId, client.id);
+      this.logger.debug(`Guest socket ${client.id} removed from Redis for match ${matchId}`);
+    }
+    client.leave(payload.matchId);
+    this.logger.debug(`Socket ${client.id} left room ${payload.matchId}`);
+    return { event: 'roomLeft', roomId: payload.matchId };
+  }
+  //#endregion
+
+  //#region addTeam
+  @SubscribeMessage('addTeam')
+  async handleAddTeam(
+    @MessageBody() payload: { matchId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const roomId = `match-${payload.matchId}`;
+    let effectiveUserId: string;
+
+    // Check if the client is an authenticated user.
+    if (client.data.userId) {
+      effectiveUserId = client.data.userId;
+    } else {
+      // For guests, verify that they already joined the match (exists in Redis).
+      const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
+      if (!isGuest) {
+        throw new NotFoundException('Guest is not registered in the room. Cannot create team.');
+      }
+      effectiveUserId = client.id; // use the socket id as a temporary identifier for guests.
+    }
+
+    const newTeam = await this.gameService.addTeam({ matchId: payload.matchId, userId: effectiveUserId });
+    client.join(roomId);
+    this.logger.debug(`New team created: ${newTeam.teamName} (${newTeam._id}) in room ${roomId} by ${client.data.userId || 'guest'}`);
+    return { event: 'teamAdded', roomId, team: newTeam };
+  }
+  //#endregion
+
+  //#region removeTeam
+  @SubscribeMessage('removeTeam')
+  async handleRemoveTeam(
+    @MessageBody() payload: { teamId: string; userId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const matchId = await this.gameService.removeTeam(payload);
+    const roomId = `match-${matchId}`;
+    // Optionally leave room if removal is needed.
     client.leave(roomId);
-    this.logger.debug(`Socket ${client.id} left room ${roomId}`);
-    return { event: 'leftRoom', roomId };
+    this.logger.debug(`Team ${payload.teamId} removed and socket ${client.id} left room ${roomId}`);
+    return { event: 'teamRemoved', roomId, teamId: payload.teamId };
   }
   //#endregion
 
@@ -128,20 +192,36 @@ export class GameGateway implements OnGatewayConnection {
   }
   //#endregion
 
-  //#region joinAsGuest
-  @SubscribeMessage('joinAsGuest')
-  async handleJoinAsGuest(
-    @MessageBody() payload: { matchId: string; guestName: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const roomId = `match-${payload.matchId}`;
-    client.join(roomId);
-    this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId}`);
-
-    await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
-    return { event: 'guestJoined', roomId, guestName: payload.guestName };
+  //#region joinRoom
+@SubscribeMessage('joinRoom')
+async handleJoinRoom(
+  @MessageBody() payload: { matchId: string; guestName?: string },
+  @ConnectedSocket() client: Socket,
+) {
+  const roomId = `match-${payload.matchId}`;
+  client.join(roomId);
+  
+  // If the client is authenticated, join as normal.
+  if (client.data.userId) {
+    this.logger.debug(`Authenticated user ${client.data.userId} joined room ${roomId}`);
+    return { event: 'roomJoined', roomId, userType: 'account' };
+  } else {
+    // For guests, if a guestName is provided, check if they're already registered in Redis.
+    if (!payload.guestName) {
+      throw new NotFoundException('Guest must provide a name to join the room');
+    }
+    const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
+    if (!isGuest) {
+      await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
+      this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} (info stored in Redis).`);
+      return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
+    } else {
+      this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
+      return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' };
+    }
   }
-  //#endregion
+}
+//#endregion
 
   //#region getRoomGuests
   @SubscribeMessage('getRoomGuests')
@@ -168,6 +248,22 @@ export class GameGateway implements OnGatewayConnection {
     client.to(`match-${payload.matchId}`).emit('matchEnded', { matchId: payload.matchId, teamResults: response.teamResults });
     this.logger.debug(`Broadcasting matchEnded to room match-${payload.matchId}`);
     return { event: 'matchEnded', matchId: payload.matchId, teamResults: response.teamResults };
+  }
+  //#endregion
+
+  //#region updateScore
+  @SubscribeMessage('updateScore')
+  async handleUpdateScore(
+    @MessageBody() payload: { teamId: string; scoreDelta?: number; foulDelta?: number; strokesDelta?: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { teamId, scoreDelta = 0, foulDelta = 0, strokesDelta = 0 } = payload;
+    const updatedTeam = await this.gameService.updateScore({ teamId, scoreDelta, foulDelta, strokesDelta });
+    // Determine the room based on the match id in the team object.
+    const roomId = `match-${updatedTeam.match.toString()}`;
+    // Broadcast updated score event to all clients in the room.
+    client.to(roomId).emit('scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
+    return { event: 'scoreUpdated', teamId: updatedTeam._id, newResult: updatedTeam.result };
   }
   //#endregion
 }

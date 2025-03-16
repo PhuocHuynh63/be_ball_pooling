@@ -24,6 +24,7 @@ export class GameService {
     this.redisClient.connect().catch(console.error);
   }
 
+  //#region createRoom
   async createRoom(payload: {
     matchId?: string;
     payloadHostUserId?: string;
@@ -51,7 +52,13 @@ export class GameService {
     // If no match, create one.
     if (!match) {
       const hostType = payload.effectiveHostUserId ? 'account' : 'guest';
-      match = new this.matchModel({ status: 'pending', hostType, pooltable: payload.pooltable, mode_game: payload.mode_game });
+      match = new this.matchModel({
+        status: 'pending',
+        hostType,
+        // Convert the pooltable field to an ObjectId
+        pooltable: new Types.ObjectId(payload.pooltable),
+        mode_game: payload.mode_game
+      });
       await match.save();
       this.logger.debug("New match created:", match);
 
@@ -84,13 +91,113 @@ export class GameService {
     }
     return { roomId, match };
   }
+  //#endregion
 
+  //#region isGuestInRoom
+  async isGuestInRoom(matchId: string, clientId: string): Promise<boolean> {
+    const key = `room:${matchId}:guests`;
+    const guests = await this.redisClient.lRange(key, 0, -1);
+    for (const guestStr of guests) {
+      const guest = JSON.parse(guestStr);
+      if (guest.socketId === clientId) {
+        return true;
+      }
+    }
+    return false;
+  }
+  //#endregion
+
+  //#region storeGuestInfo
   async storeGuestInfo(matchId: string, clientId: string, guestName: string) {
     const guestInfo = { socketId: clientId, name: guestName };
     await this.redisClient.rPush(`room:${matchId}:guests`, JSON.stringify(guestInfo));
     this.logger.debug(`Stored guest info in Redis for match ${matchId}:`, guestInfo);
   }
+  //#endregion
 
+  //#region removeGuestInfo
+  async removeGuestInfo(matchId: string, clientId: string): Promise<void> {
+    const key = `room:${matchId}:guests`;
+    const guestEntries = await this.redisClient.lRange(key, 0, -1);
+    for (const guestStr of guestEntries) {
+      try {
+        const guest = JSON.parse(guestStr);
+        if (guest.socketId === clientId) {
+          // Remove this guest entry from the list.
+          await this.redisClient.lRem(key, 1, guestStr);
+          this.logger.debug(`Removed guest info from Redis for match ${matchId}: ${guestStr}`);
+          break;
+        }
+      } catch (error) {
+        this.logger.error('Error parsing guest entry from Redis', error);
+      }
+    }
+  }
+  //#endregion
+
+  // async addTeam({ matchId, userId }: { matchId: string; userId: string }): Promise<any> {
+  //   const match = await this.matchModel.findById(matchId);
+  //   if (!match) {
+  //     throw new NotFoundException(`Match with id ${matchId} not found`);
+  //   }
+  //   // Count existing active teams for the match using ObjectId for proper matching.
+  //   const teamCount = await this.teamModel.countDocuments({
+  //     match: new Types.ObjectId(matchId),
+  //     isDeleted: { $ne: true }
+  //   });
+  //   console.log(teamCount);
+  //   const defaultTeamName = `Team ${teamCount + 1}`;
+
+  //   const newTeam = new this.teamModel({
+  //     teamName: defaultTeamName,
+  //     members: [userId],
+  //     // Ensure the match field is stored as an ObjectId.
+  //     match: new Types.ObjectId(matchId),
+  //     result: { score: 0, foulCount: 0, strokes: 0 },
+  //   });
+  //   await newTeam.save();
+  //   this.logger.debug(`New team created: ${newTeam.teamName} for match ${matchId}`);
+  //   return newTeam;
+  // }
+
+  //#region addTeam
+  async addTeam({ matchId, userId }: { matchId: string; userId: string }): Promise<any> {
+    const match = await this.matchModel.findById(matchId);
+    if (!match) {
+      throw new NotFoundException(`Match with id ${matchId} not found`);
+    }
+
+    const newTeam = new this.teamModel({
+      teamName: 'New Team',
+      members: [userId],
+      // Store the match as an ObjectId.
+      match: new Types.ObjectId(matchId),
+      result: { score: 0, foulCount: 0, strokes: 0 },
+    });
+    await newTeam.save();
+    this.logger.debug(`New team created: ${newTeam.teamName} for match ${matchId}`);
+    return newTeam;
+  }
+  //#endregion
+
+
+  //#region removeTeam
+  async removeTeam({ teamId, userId }: { teamId: string; userId: string }): Promise<string> {
+    const team = await this.teamModel.findById(teamId);
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+    // Optionally, you can restrict removal to teams that the user owns or is a member of.
+    // For now, we simply flag the team as deleted.
+    team.isDeleted = true;
+    await team.save();
+    this.logger.debug(`Team ${teamId} removed by user ${userId}`);
+    // Optionally, return the match id to update the client's room.
+    return team.match.toString();
+  }
+  //#endregion
+
+  //#region changeTeam
   async changeTeam({ currentTeamId, newTeamId, userId }: { currentTeamId: string; newTeamId: string; userId: string }): Promise<string> {
     const currentTeam = await this.teamModel.findById(currentTeamId);
     const newTeam = await this.teamModel.findById(newTeamId);
@@ -110,7 +217,9 @@ export class GameService {
     }
     return newTeam._id.toString();
   }
+  //#endregion
 
+  //#region leaveTeam
   async leaveTeam({ teamId, userId }: { teamId: string; userId: string }): Promise<string> {
     const team = await this.teamModel.findById(teamId);
     if (!team) {
@@ -120,7 +229,9 @@ export class GameService {
     await team.save();
     return team.match.toString();
   }
+  //#endregion
 
+  //#region createTeam
   async createTeam({ matchId, userId }: { matchId: string; userId: string }): Promise<any> {
     const match = await this.matchModel.findById(matchId);
     if (!match) {
@@ -140,7 +251,9 @@ export class GameService {
     await newTeam.save();
     return newTeam;
   }
+  //#endregion
 
+  //#region joinTeam
   async joinTeam({ teamId, userId }: { teamId: string; userId: string }) {
     const team = await this.teamModel.findById(teamId);
     if (!team) {
@@ -153,7 +266,9 @@ export class GameService {
     }
     return team;
   }
+  //#endregion
 
+  //#region getRoomGuests
   async getRoomGuests(matchId: string): Promise<any[]> {
     const redisKey = `room:${matchId}:guests`;
     const guestData = await this.redisClient.lRange(redisKey, 0, -1);
@@ -161,7 +276,9 @@ export class GameService {
     this.logger.debug(`Parsed room guests for match ${matchId}:`, guests);
     return guests;
   }
+  //#endregion
 
+  //#region endMatch
   async endMatch({ matchId, teamResults }:
     { matchId: string; teamResults: Array<{ teamId: string; result: { score: number; foulCount: number; strokes: number } }> }) {
     const match = await this.matchModel.findById(matchId);
@@ -176,4 +293,32 @@ export class GameService {
     }
     return { matchId, teamResults };
   }
+  //#endregion
+
+  //#region updateScore
+  async updateScore({
+    teamId,
+    scoreDelta,
+    foulDelta,
+    strokesDelta,
+  }: {
+    teamId: string;
+    scoreDelta: number;
+    foulDelta: number;
+    strokesDelta: number;
+  }) {
+    const team = await this.teamModel.findById(teamId);
+    if (!team) {
+      throw new NotFoundException(`Team with id ${teamId} not found`);
+    }
+    // Update the team's result fields with provided delta values.
+    team.result.score = (team.result.score || 0) + scoreDelta;
+    team.result.foulCount = (team.result.foulCount || 0) + foulDelta;
+    team.result.strokes = (team.result.strokes || 0) + strokesDelta;
+
+    await team.save();
+    this.logger.debug(`Updated score for team ${teamId}:`, team.result);
+    return team;
+  }
+  //#endregion
 }
