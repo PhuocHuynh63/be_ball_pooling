@@ -6,11 +6,13 @@ import { CreatePoolTableDto } from './dto/create-pooltable.dto';
 import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
 import { UploadService } from 'src/upload/upload.service';
 import * as QRCode from 'qrcode';
+import { console } from 'node:inspector';
 
 @Injectable()
 export class PoolTableService {
   constructor(
-    @InjectModel(PoolTable.name) private poolTableModel: Model<PoolTable>,
+    @InjectModel(PoolTable.name)
+    private poolTableModel: Model<PoolTable>,
     private readonly uploadService: UploadService
   ) { }
 
@@ -59,7 +61,7 @@ export class PoolTableService {
   //#region update
   async update(id: string, updatePoolTableDto: UpdatePoolTableDto): Promise<PoolTable> {
     const poolTable = await this.poolTableModel.findById(id).exec();
-    if (!poolTable || poolTable.deletedAt) {
+    if (!poolTable) {
       throw new NotFoundException('Pool table not found');
     }
 
@@ -83,6 +85,7 @@ export class PoolTableService {
 
       // Cập nhật URL của mã QR vào cơ sở dữ liệu
       poolTable.qrCodeImg = uploadResult;
+      poolTable.deletedAt = null;
     }
 
     return poolTable.save();
@@ -118,6 +121,16 @@ export class PoolTableService {
   }
   //#endregion
 
+  //#region findAllPooltableInStore
+  async findAllPooltableByStoreID(id: string): Promise<{ number: number, tables: PoolTable[] }> {
+
+    const allTable = await this.poolTableModel.find({ store: new Types.ObjectId(id) }).exec();
+    const number = allTable.length;
+
+    return { number, tables: allTable };
+  }
+  //#endregion
+
   //#region findAllIncludingDeleted
   async findAllIncludingDeleted(): Promise<PoolTable[]> {
     return this.poolTableModel.find().exec();
@@ -129,6 +142,5 @@ export class PoolTableService {
     return this.poolTableModel.find({ status, deletedAt: null }).exec();
   }
   //#endregion
-
 
 }

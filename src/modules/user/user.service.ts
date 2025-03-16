@@ -48,12 +48,20 @@ export class UserService {
   //#endregion
 
   //#region updateUser 
-  async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUsers, { new: true }).exec();
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+  async updateUser(id: string, updateUsers: updateUsersDto, file?: Express.Multer.File): Promise<User> {
+
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
-    return updatedUser;
+
+    if (file) {
+      const folder = 'avatar';
+      const urlAvatar = await this.uploadService.uploadImage(file, folder, user.avatar);
+      updateUsers.avatar = urlAvatar; // Set lại URL vào thuộc tính avatar
+    }
+    Object.assign(user, updateUsers);
+    return await user.save();
   }
   //#endregion
 
