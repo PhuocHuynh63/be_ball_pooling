@@ -67,27 +67,6 @@ export class PoolTableService {
 
     // Cập nhật các thuộc tính của bàn bi-a
     Object.assign(poolTable, updatePoolTableDto);
-
-    // Nếu cần cập nhật mã QR
-    if (updatePoolTableDto.generateNewQRCode) {
-      const qrCodeData = poolTable._id;
-      const teamWaitingRoomUrl = `https://fewebballpooling.vercel.app/team-waiting-room/${qrCodeData}`;
-      const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
-
-      // Lưu mã QR vào Cloudinary
-      const uploadResult = await this.uploadService.uploadImage(
-        {
-          buffer: Buffer.from(qrCodeImage.split(',')[1], 'base64'),
-          originalname: `${qrCodeData}-qrcode.png`,
-        } as Express.Multer.File,
-        'qrcodes'
-      );
-
-      // Cập nhật URL của mã QR vào cơ sở dữ liệu
-      poolTable.qrCodeImg = uploadResult;
-      poolTable.deletedAt = null;
-    }
-
     return poolTable.save();
   }
   //#endregion

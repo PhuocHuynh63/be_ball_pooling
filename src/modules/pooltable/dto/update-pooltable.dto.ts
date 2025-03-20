@@ -22,12 +22,4 @@ export class UpdatePoolTableDto extends PartialType(CreatePoolTableDto) {
   @IsMongoId()
   store?: string;
 
-
-  @ApiProperty({
-    example: true,
-    description: 'Flag to indicate if a new QR code should be generated',
-  })
-  @IsOptional()
-  @IsBoolean()
-  generateNewQRCode?: boolean;
 }

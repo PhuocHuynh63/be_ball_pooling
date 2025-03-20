@@ -41,6 +41,25 @@ export class TeamService {
   }
   //#endregion
 
+  //#region remove
+  async remove(id: string): Promise<Team> {
+    const team = await this.teamModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { new: true }
+    ).exec();
+
+    if (!team) {
+      throw new NotFoundException(`Team with id '${id}' not found`);
+    }
+    return team;
+  }
+  //#endregion
 
   //#region findAll
   async findAll(): Promise<Team[]> {
@@ -80,6 +99,7 @@ export class TeamService {
   }
   //#endregion
 
+  //#region findTeamByMatch
   async findTeamByMatch(matchId: string) {
     if (!Types.ObjectId.isValid(matchId)) {
       throw new BadRequestException(`Invalid match id '${matchId}'`);
@@ -94,25 +114,7 @@ export class TeamService {
 
     return teams;
   }
-
-  //#region remove
-  async remove(id: string): Promise<Team> {
-    const team = await this.teamModel.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          isDeleted: true,
-          deletedAt: new Date()
-        }
-      },
-      { new: true }
-    ).exec();
-
-    if (!team) {
-      throw new NotFoundException(`Team with id '${id}' not found`);
-    }
-    return team;
-  }
   //#endregion
+
 
 }

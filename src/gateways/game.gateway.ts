@@ -4,7 +4,7 @@ import { Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { GameService } from '../services/game/game.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ cors: { origin: '*' } })
 export class GameGateway implements OnGatewayConnection {
   private readonly logger = new Logger(GameGateway.name);
 
@@ -193,35 +193,35 @@ export class GameGateway implements OnGatewayConnection {
   //#endregion
 
   //#region joinRoom
-@SubscribeMessage('joinRoom')
-async handleJoinRoom(
-  @MessageBody() payload: { matchId: string; guestName?: string },
-  @ConnectedSocket() client: Socket,
-) {
-  const roomId = `match-${payload.matchId}`;
-  client.join(roomId);
-  
-  // If the client is authenticated, join as normal.
-  if (client.data.userId) {
-    this.logger.debug(`Authenticated user ${client.data.userId} joined room ${roomId}`);
-    return { event: 'roomJoined', roomId, userType: 'account' };
-  } else {
-    // For guests, if a guestName is provided, check if they're already registered in Redis.
-    if (!payload.guestName) {
-      throw new NotFoundException('Guest must provide a name to join the room');
-    }
-    const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
-    if (!isGuest) {
-      await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
-      this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} (info stored in Redis).`);
-      return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(
+    @MessageBody() payload: { matchId: string; guestName?: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const roomId = `match-${payload.matchId}`;
+    client.join(roomId);
+
+    // If the client is authenticated, join as normal.
+    if (client.data.userId) {
+      this.logger.debug(`Authenticated user ${client.data.userId} joined room ${roomId}`);
+      return { event: 'roomJoined', roomId, userType: 'account' };
     } else {
-      this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
-      return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' };
+      // For guests, if a guestName is provided, check if they're already registered in Redis.
+      if (!payload.guestName) {
+        throw new NotFoundException('Guest must provide a name to join the room');
+      }
+      const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
+      if (!isGuest) {
+        await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
+        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} (info stored in Redis).`);
+        return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
+      } else {
+        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
+        return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' };
+      }
     }
   }
-}
-//#endregion
+  //#endregion
 
   //#region getRoomGuests
   @SubscribeMessage('getRoomGuests')
