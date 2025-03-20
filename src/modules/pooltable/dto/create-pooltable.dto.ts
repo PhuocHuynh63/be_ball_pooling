@@ -1,14 +1,9 @@
 import { IsNotEmpty, IsString, IsArray, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Types } from 'mongoose';
 
 export class CreatePoolTableDto {
-  @ApiProperty({
-    example: '1377912466142',
-    description: 'QR code of the pool table',
-  })
-  @IsNotEmpty()
-  @IsString()
-  readonly qrCode: string;
+ 
 
   @ApiProperty({
     example: 'available',
@@ -35,4 +30,5 @@ export class CreatePoolTableDto {
   @IsNotEmpty()
   @IsMongoId()
   readonly store: string;
+  
 }

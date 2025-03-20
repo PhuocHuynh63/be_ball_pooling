@@ -8,19 +8,24 @@ import * as https from 'https';
 import * as passport from 'passport';
 
 async function bootstrap() {
-//   const httpsOptions = {
-//     pfx: fs.readFileSync('src/config/keystore.p12'),
 
-//     // pfx: fs.readFileSync('dist/config/keystore.p12'),
-//     passphrase: '123123123',
-//   };
-  const app = await NestFactory.create(AppModule);
 
-  // const app = await NestFactory.create(AppModule, {
-  //   httpsOptions,
-  // });
+  const httpsOptions = {
+    // pfx: fs.readFileSync('src/config/keystore.p12'),
 
-  app.use(passport.initialize()); 
+    pfx: fs.readFileSync('dist/config/keystore.p12'),
+    passphrase: '123123123',
+  };
+
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions,
+  });
+
+
+  // const app = await NestFactory.create(AppModule);
+
+
+  app.use(passport.initialize());
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 8000;
 
@@ -46,7 +51,15 @@ async function bootstrap() {
     .setTitle('API PoolScoring')
     .setDescription('NestJS API PoolScoring')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

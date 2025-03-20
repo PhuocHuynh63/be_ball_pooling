@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../../modules/user/entities/user.schema';
+import { UserRoles } from 'src/constant/users.enums';
 
 export class CreateAuthDto {
-  @IsNotEmpty({ message: 'Name is required' })
+  @IsNotEmpty({ message: 'name is required' })
   @ApiProperty({
     example: 'Thuan',
     description: 'Name of the user',
@@ -12,39 +12,42 @@ export class CreateAuthDto {
 
   avatar: string;
 
-  @IsNotEmpty({ message: 'Email is required' })
+  @IsNotEmpty({ message: 'email is required' })
   @ApiProperty({
     example: 'thuan@example.com',
     description: 'Email of the user',
   })
   email: string;
 
-  @IsNotEmpty({ message: 'Password is required' })
+  @IsNotEmpty({ message: 'password is required' })
   @ApiProperty({
     example: 'thuanpass123',
-    description: 'Password for the user account',
+    description: 'password for the user account',
   })
   password: string;
 
-  @IsNotEmpty({ message: 'Phone is required' })
+  @IsNotEmpty({ message: 'phone is required' })
   @ApiProperty({
     example: '0986056438',
-    description: 'User phone number',
+    description: 'user phone number',
   })
   phone: string;
 
-  @IsNotEmpty({ message: 'Role is required' })
-  @IsEnum(UserRole, { message: 'Role must be user' })
-  @ApiProperty({
-    example: 'user',
-    description: 'Role for the user',
-    enum: UserRole,
-  })
-  role: UserRole;
 
+  @IsOptional()
+  @ApiProperty({
+    example: 'manager || if do not push already user',
+    description: 'Role for the manager, if do not push already user ',
+    enum: UserRoles,
+    required: false,
+  })
+  role: UserRoles;
+
+  @IsOptional()
   @ApiProperty({
     example: 'active',
     description: 'Current status of the user account',
+    required: false,
   })
   status: string;
 
@@ -55,6 +58,7 @@ export class CreateAuthDto {
     description: 'Authentication provider for the user',
     enum: ['local', 'google'],
     default: 'local',
+    required: false,
   })
   authProvider?: 'local' | 'google';
 }

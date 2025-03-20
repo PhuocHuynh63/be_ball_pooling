@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { UserRole } from '@modules/user/entities/user.schema';
 import { UploadService } from 'src/upload/upload.service';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Injectable()
 export class AuthService {
@@ -41,14 +41,10 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
-
+  
   //tạo user bth
-  async handleRegister(registerDto: CreateAuthDto) {
-    if (!Object.values(UserRole).includes(registerDto.role)) {
-      throw new BadRequestException('Only user role can be assigned during registration');
-    }
-    try {
-     
+  async handleRegister(registerDto: CreateAuthDto) {   
+    try {    
       return await this.userService.createUser({
         ...registerDto,
       });

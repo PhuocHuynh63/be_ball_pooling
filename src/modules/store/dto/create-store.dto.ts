@@ -13,14 +13,6 @@ export class CreateStoreDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    example: 'open',
-    description: 'Status of the store',
-  })
-  readonly status: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty({
     example: '29 Le Van Viet, TP.HCM',
     description: 'Address of the store',
   })
@@ -33,4 +25,5 @@ export class CreateStoreDto {
     description: 'Manager ID of the store',
   })
   readonly manager: string;
+  
 }

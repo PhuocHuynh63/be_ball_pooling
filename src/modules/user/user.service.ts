@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException, UseGuards } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -9,8 +9,11 @@ import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
 import { updateUsersDto } from './dto/update-user.dto';
 import { UploadService } from 'src/upload/upload.service';
+import { RolesGuard } from 'src/auth/passport/roles.guard';
+import { FindUserDto } from './dto/user.dto';
 
 @Injectable()
+@UseGuards(RolesGuard)
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
@@ -30,7 +33,7 @@ export class UserService {
 
     // Enforce the strong password regex for local registration
     if (createUserDto.authProvider === 'local') {
-     
+
       const hashedPassword = await hashPasswordHelper(createUserDto.password);
       createUserDto.password = hashedPassword;
     }
@@ -45,15 +48,34 @@ export class UserService {
   //#endregion
 
   //#region updateUser 
-  async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUsers, { new: true }).exec();
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+  async updateUser(id: string, updateUsers: updateUsersDto, file?: Express.Multer.File): Promise<User> {
+
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
-    return updatedUser;
+
+    if (file) {
+      const folder = 'avatar';
+      const urlAvatar = await this.uploadService.uploadImage(file, folder, user.avatar);
+      updateUsers.avatar = urlAvatar; // Set lại URL vào thuộc tính avatar
+    }
+    Object.assign(user, updateUsers);
+    return await user.save();
   }
   //#endregion
-  
+
+  //#region delete
+  async delete(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.status = 'inactive'; // Set status to inactive for soft deletion
+    return user.save();
+  }
+  //#endregion
+
   //#region findAll
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -63,15 +85,15 @@ export class UserService {
   //#region find
   async find(query: any): Promise<User[]> {
     console.log('Query parameters:', query); // Logging query parameters
-  
+
     // Nếu không có tham số truy vấn, trả về tất cả người dùng
     if (Object.keys(query).length === 0) {
       return this.findAll();
     }
-  
+
     // Xây dựng đối tượng truy vấn động
     const queryObject: any = {};
-  
+
     for (const key in query) {
       if (query.hasOwnProperty(key)) {
         switch (key) {
@@ -92,7 +114,7 @@ export class UserService {
         }
       }
     }
-  
+
     console.log('Query object:', queryObject); // Logging query object
     const users = await this.userModel.find(queryObject).exec();
     console.log('Found users:', users); // Logging found users
@@ -100,14 +122,74 @@ export class UserService {
   }
   //#endregion
 
+  //#region findUserBySearchOrFilter
+  async findUserBySearchOrFilter(query: FindUserDto) {
+
+    //#region Pagination
+    const currentPage = query.current ? Number(query.current) : 1;
+    const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
+    let skip = (currentPage - 1) * pageSizePage;
+    //#endregion
+
+    //#region Filter
+    const filterConditions: Record<string, any> = {};
+
+    if (query.term) {
+      filterConditions
+        .$or = [
+          { name: new RegExp(query.term, 'i') },
+          { email: new RegExp(query.term, 'i') },
+          { phone: new RegExp(query.term, 'i') },
+        ]
+    };
+
+    if (query.role) {
+      filterConditions.role = query.role;
+    }
+
+    if (query.status) {
+      filterConditions.status = query.status;
+    }
+    //#endregion
+
+    //#region Sort
+    const allowedSortFields = ['createdAt', 'updatedAt', 'name', 'email', 'phone', 'status'];
+    const sortField = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
+    const sortDirection = query.sortDirection === 'desc' ? -1 : 1;
+    //#endregion
+
+    const [result, totalItem] = await Promise.all([
+      this.userModel
+        .find(filterConditions)
+        .sort({ [sortField]: sortDirection })
+        .skip(skip)
+        .limit(pageSizePage)
+        .lean(),
+      this.userModel.countDocuments(filterConditions)
+    ]);
+
+    const totalPage = Math.ceil(totalItem / pageSizePage);
+
+    return {
+      data: result,
+      pagination: {
+        current: currentPage,
+        pageSize: pageSizePage,
+        totalPage: totalPage,
+        totalItem: totalItem,
+      }
+    }
+  }
+  //#endregion
+
   //#region findOne
   async findOne(id: string): Promise<User> {
     const user = await this.userModel.findById(id).exec();
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    
+
     return user;
   }
   //#endregion
@@ -115,7 +197,7 @@ export class UserService {
   //#region findEmail
   async findEmail(email: string): Promise<User> {
     const user = await this
-    .userModel.findOne({ email: email }).exec();
+      .userModel.findOne({ email: email }).exec();
     if (!user) {
       throw new NotFoundException(`User with Email ${email} not found`);
     }
@@ -126,15 +208,15 @@ export class UserService {
   //#region findEmailandPassword
   async findEmailandPassword(email: string, password: string): Promise<User> {
     const user = await this.userModel.findOne({ email }).exec();
-    
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new NotFoundException('Invalid email or password');
     }
-  
+
     return user;
   }
-    //#endregion
-  
+  //#endregion
+
   //#region findOneByEmail
   async findByEmail(email: string): Promise<User> {
     console.log('UserService: findByEmail: email:', email); // Debugging statement
@@ -201,17 +283,6 @@ export class UserService {
     user.password = hashedPassword;
     await user.save();
     return { message: 'Password reset successful' };
-  }
-  //#endregion
-
-  //#region delete
-  async delete(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    user.status = 'inactive'; // Set status to inactive for soft deletion
-    return user.save();
   }
   //#endregion
 

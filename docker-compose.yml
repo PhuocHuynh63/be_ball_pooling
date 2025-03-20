@@ -6,14 +6,8 @@ services:
     build:
       context: /home/root/BE2
       dockerfile: Dockerfile
-    environment:
-      PORT: 8000
-      MONGODB_URI: mongodb+srv://thuanbakhac:hpcy71ygt54r2@cluster0.500p5ep.mongodb.net/
-      DATABASE_USER: SA
-      DATABASE_PASS: YourStrong@Passw0rd
-      JWT_SECRET: SECRET_STRING
-      JWT_ACCESS_TOKEN_EXPIRED: 365d
-  
+    env_file:
+      - .env.production
     ports:
       - "8000:8000"
     networks:
