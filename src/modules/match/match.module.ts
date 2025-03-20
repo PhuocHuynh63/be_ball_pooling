@@ -16,6 +16,7 @@ import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
   ],
   providers: [MatchService, RolesGuard, JwtAuthGuard],
   controllers: [MatchController],
-  exports: [MatchService]
+  exports: [MongooseModule, MatchService]
+
 })
 export class MatchModule { }

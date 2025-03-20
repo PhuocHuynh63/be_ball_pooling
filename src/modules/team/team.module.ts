@@ -14,6 +14,7 @@ import { MatchModule } from '@modules/match/match.module';
   ],
   controllers: [TeamController],
   providers: [TeamService, RolesGuard, JwtAuthGuard],
-  exports: [TeamService]
+  exports: [TeamService, MongooseModule]
+  
 })
 export class TeamModule { }
