@@ -19,6 +19,13 @@ export class CreateAuthDto {
   })
   email: string;
 
+  @IsNotEmpty({ message: 'otp is required' })
+  @ApiProperty({
+    example: '876543',
+    description: 'OTP code send to email of the user',
+  })
+  otp: string;
+
   @IsNotEmpty({ message: 'password is required' })
   @ApiProperty({
     example: 'thuanpass123',

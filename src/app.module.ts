@@ -15,6 +15,9 @@ import { AuthModule } from './auth/auth.module';
 import { TeamModule } from './modules/team/team.module';
 import { UploadModule } from './upload/upload.module';
 import { GameModule } from './gateways/game.module';
+import { RedisModule } from './redis/redis.module';
+import Mail from 'nodemailer/lib/mailer';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -70,7 +73,9 @@ import { GameModule } from './gateways/game.module';
     StoreModule,
     TeamModule,
     UploadModule,
-    GameModule
+    GameModule,
+    RedisModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,14 +6,15 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
 import { UploadService } from 'src/upload/upload.service';
 import { UserRoles } from 'src/constant/users.enums';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-    private readonly uploadService: UploadService,
-  ) {}
+    private readonly mailService: MailService,
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findEmailandPassword(email, password);
@@ -41,10 +42,14 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
-  
+
   //tạo user bth
-  async handleRegister(registerDto: CreateAuthDto) {   
-    try {    
+  async handleRegister(registerDto: CreateAuthDto) {
+    try {
+      const otp = this.mailService.verifyOtp(registerDto.email, registerDto.otp);
+      if (!otp) {
+        throw new UnauthorizedException('Invalid OTP');
+      }
       return await this.userService.createUser({
         ...registerDto,
       });
@@ -58,14 +63,6 @@ export class AuthService {
 
   async checkActiveCode(id: string) {
     return await this.userService.checkActiveCode(id);
-  }
-
-  async sendCodeOTP(email: string) {
-    return await this.userService.sendCodeOTP(email);
-  }
-
-  async verifyCode(body: { email: string, code: string }) {
-    return await this.userService.verifyCode(body);
   }
 
   async activeAccount(body: { email: string }) {
