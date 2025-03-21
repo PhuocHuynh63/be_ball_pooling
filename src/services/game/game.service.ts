@@ -255,10 +255,25 @@ export class GameService {
 
   //#region joinTeam
   async joinTeam({ teamId, userId }: { teamId: string; userId: string }) {
+    // Find the team the user is trying to join.
     const team = await this.teamModel.findById(teamId);
     if (!team) {
       throw new NotFoundException(`Team with id ${teamId} not found`);
     }
+
+    // Prevent duplicate membership: Check if the user is already in any team for the same match.
+    const existingTeam = await this.teamModel.findOne({
+      match: team.match,
+      members: { $in: [new Types.ObjectId(userId)] },
+      isDeleted: { $ne: true }
+    });
+
+    // If found and it's not the same team, reject the join request.
+    if (existingTeam && existingTeam._id.toString() !== teamId) {
+      throw new Error('User is already in a team for this match');
+    }
+
+    // Add the user if not already a member of this team.
     if (!team.members.map(id => id.toString()).includes(userId)) {
       team.members.push(new Types.ObjectId(userId));
       await team.save();
@@ -267,6 +282,37 @@ export class GameService {
     return team;
   }
   //#endregion
+
+  async getPlayers(matchId: string): Promise<{ accounts: string[]; guests: any[] }> {
+    // Query teams for account players (members)
+    const teams = await this.teamModel.find({
+      match: new Types.ObjectId(matchId),
+      isDeleted: { $ne: true }
+    });
+    const accounts: string[] = [];
+    teams.forEach(team => {
+      // Assuming team.members is an array of account ids (strings)
+      team.members.forEach(member => {
+        if (member) {
+          accounts.push(member.toString());
+        }
+      });
+    });
+
+    // Get guest players from Redis
+    const key = `room:${matchId}:guests`;
+    const guestEntries = await this.redisClient.lRange(key, 0, -1);
+    const guests = guestEntries.map(entry => {
+      try {
+        return JSON.parse(entry);
+      } catch (err) {
+        this.logger.error('Error parsing guest entry from Redis:', err);
+        return null;
+      }
+    }).filter(g => g !== null);
+
+    return { accounts, guests };
+  }
 
   //#region getRoomGuests
   async getRoomGuests(matchId: string): Promise<any[]> {
@@ -321,4 +367,22 @@ export class GameService {
     return team;
   }
   //#endregion
+
+  //#region findTeamById
+  async findTeamById(teamId: string): Promise<any> {
+    return await this.teamModel.findById(teamId);
+  }
+  //#endregion
+
+  //#region leaveMatch
+  async leaveMatch({ matchId, userId }: { matchId: string; userId: string }): Promise<void> {
+    // Remove the user from all teams associated with the match.
+    await this.teamModel.updateMany(
+      { match: new Types.ObjectId(matchId), members: { $in: [new Types.ObjectId(userId)] } },
+      { $pull: { members: new Types.ObjectId(userId) } }
+    );
+    this.logger.debug(`User ${userId} removed from all teams in match ${matchId}`);
+  }
+  //#endregion
 }
+

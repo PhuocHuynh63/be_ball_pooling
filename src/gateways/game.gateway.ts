@@ -62,7 +62,8 @@ export class GameGateway implements OnGatewayConnection {
     }
     client.join(roomId);
     this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
-    return { event: 'roomCreated', roomId, matchId: match._id };
+    client.emit('roomCreated', {roomId, matchId: match._id });
+    return;
   }
   //#endregion
 
@@ -103,16 +104,20 @@ export class GameGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.userId;
-    // If the client is not authenticated (a guest), remove their guest info from Redis.
-    if (!userId) {
-      // Assumes roomId is in the format "match-<matchId>"
-      const matchId = payload.matchId.replace('match-', '');
-      await this.gameService.removeGuestInfo(matchId, client.id);
-      this.logger.debug(`Guest socket ${client.id} removed from Redis for match ${matchId}`);
+    const roomId = `match-${payload.matchId}`;
+
+    // For authenticated users, remove them from their teams in the match.
+    if (userId) {
+      await this.gameService.leaveMatch({ matchId: payload.matchId, userId });
+    } else {
+      const actualMatchId = payload.matchId.replace('match-', '');
+      await this.gameService.removeGuestInfo(actualMatchId, client.id);
+      this.logger.debug(`Guest socket ${client.id} removed from Redis for match ${actualMatchId}`);
     }
-    client.leave(payload.matchId);
-    this.logger.debug(`Socket ${client.id} left room ${payload.matchId}`);
-    return { event: 'roomLeft', roomId: payload.matchId };
+
+    client.leave(roomId);
+    this.logger.debug(`Socket ${client.id} left room ${roomId}`);
+    return { event: 'roomLeft', roomId };
   }
   //#endregion
 
@@ -175,20 +180,43 @@ export class GameGateway implements OnGatewayConnection {
   //#region joinTeam
   @SubscribeMessage('joinTeam')
   async handleJoinTeam(
-    @MessageBody() payload: any,
+    @MessageBody() payload: { teamId: string },
     @ConnectedSocket() client: Socket,
   ) {
     this.logger.debug("joinTeam payload received:", payload);
-    const teamId = Array.isArray(payload) ? payload[0].teamId : payload.teamId;
+    const { teamId } = payload;
     const userId = client.data.userId;
-    if (!teamId) throw new NotFoundException('teamId must be provided');
-    if (!userId) throw new NotFoundException('Authenticated user id not found');
 
-    const team = await this.gameService.joinTeam({ teamId, userId });
+    if (!teamId) {
+      return { event: 'joinTeamError', message: 'teamId must be provided' };
+    }
+    if (!userId) {
+      return { event: 'joinTeamError', message: 'Authenticated user id not found' };
+    }
+
+    // First, get the team without modifying it, so we can know its match id.
+    const team = await this.gameService.findTeamById(teamId);
+    if (!team) {
+      return { event: 'joinTeamError', message: `Team with id ${teamId} not found` };
+    }
+    // Derive the roomId from the team match id.
     const roomId = `match-${team.match.toString()}`;
-    client.join(roomId);
-    this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
-    return { event: 'matchJoined', roomId, teamId: team._id };
+
+    console.log("joinTeam roomId:", roomId);
+    console.log("joinTeam client.rooms:", client.rooms);
+
+    // Check if socket is in the expected room.
+    if (!client.rooms.has(roomId)) {
+      client.emit('joinTeamError', 'Please join the room first before joining a team');
+      return;
+    }
+
+    // At this point the user is in the right room, so add them to the team.
+    const updatedTeam = await this.gameService.joinTeam({ teamId, userId });
+
+    this.logger.debug(`Socket ${client.id} joined team ${teamId} in room ${roomId}`);
+    client.emit('matchJoined', { roomId, teamId: updatedTeam._id });
+    return;
   }
   //#endregion
 
@@ -199,27 +227,47 @@ export class GameGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
   ) {
     const roomId = `match-${payload.matchId}`;
+
+    // Remove any other "match-" rooms (limits a user to one match at a time)
+    client.rooms.forEach((r) => {
+      if (r.startsWith('match-') && r !== roomId) {
+        client.leave(r);
+        this.logger.debug(`Socket ${client.id} left room ${r}`);
+      }
+    });
+
+    // Now join the intended room.
     client.join(roomId);
 
-    // If the client is authenticated, join as normal.
     if (client.data.userId) {
       this.logger.debug(`Authenticated user ${client.data.userId} joined room ${roomId}`);
       return { event: 'roomJoined', roomId, userType: 'account' };
     } else {
-      // For guests, if a guestName is provided, check if they're already registered in Redis.
       if (!payload.guestName) {
         throw new NotFoundException('Guest must provide a name to join the room');
       }
       const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
       if (!isGuest) {
         await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
-        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} (info stored in Redis).`);
+        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} and info stored in Redis.`);
         return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
       } else {
         this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
         return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' };
       }
     }
+  }
+  //#endregion
+
+  //#region getPlayers
+  @SubscribeMessage('getPlayers')
+  async handleGetPlayers(
+    @MessageBody() payload: { matchId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const players = await this.gameService.getPlayers(payload.matchId);
+    this.logger.debug(`Fetching players for match ${payload.matchId}:`, players);
+    return { event: 'matchPlayers', matchId: payload.matchId, players };
   }
   //#endregion
 
