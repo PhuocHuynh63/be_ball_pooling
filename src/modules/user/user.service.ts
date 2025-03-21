@@ -17,7 +17,6 @@ import { FindUserDto } from './dto/user.dto';
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    private readonly mailService: MailService,
     private readonly uploadService: UploadService,
   ) { }
 
@@ -28,20 +27,14 @@ export class UserService {
       createUserDto.authProvider = 'local';
     }
 
-    // Log the incoming password to debug its plain-text value
-    // console.log('Incoming password:', createUserDto.password);
-
     // Enforce the strong password regex for local registration
     if (createUserDto.authProvider === 'local') {
-
       const hashedPassword = await hashPasswordHelper(createUserDto.password);
       createUserDto.password = hashedPassword;
     }
 
     const createdUser = new this.userModel({
       ...createUserDto,
-      createdAt: new Date(),
-      deletedAt: null,
     });
     return createdUser.save();
   }
@@ -223,36 +216,6 @@ export class UserService {
     const user = await this.userModel.findOne({ email: email }).exec();
     console.log('UserService: findByEmail: user:', user); // Debugging statement
     return user;
-  }
-  //#endregion
-
-  //#region sendCodeOTP
-  async sendCodeOTP(email: string): Promise<any> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
-    user.otp = otp;
-    await user.save();
-    await this.mailService.sendMail(email, 'Your OTP Code', `Your OTP code is ${otp}`);
-    return { message: 'OTP sent' };
-  }
-  //#endregion
-
-  //#region verifyCode
-  async verifyCode(body: { email: string, code: string }): Promise<any> {
-    const { email, code } = body; // Ensure email is declared
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    if (user.otp !== code) {
-      throw new BadRequestException('Invalid OTP code');
-    }
-    user.otp = null; // Clear the OTP after verification
-    await user.save();
-    return { message: 'OTP verified' };
   }
   //#endregion
 

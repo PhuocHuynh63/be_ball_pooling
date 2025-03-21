@@ -16,6 +16,7 @@ import { User, UserSchema } from '@modules/user/entities/user.schema';
 import { GoogleStrategy } from './passport/google.strategy';
 import { UploadService } from 'src/upload/upload.service';
 import { CloudinaryModule } from 'src/upload/cloudinary/cloudinary.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -32,9 +33,10 @@ import { CloudinaryModule } from 'src/upload/cloudinary/cloudinary.module';
       inject: [ConfigService],
     }),
     PassportModule,
+    MailModule,
   ],
   controllers: [AuthController, GoogleAuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy, UploadService],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy],
   exports: [JwtAuthGuard, RolesGuard],
 })
-export class AuthModule {}
+export class AuthModule { }

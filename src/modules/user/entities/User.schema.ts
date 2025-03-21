@@ -35,9 +35,6 @@ export class User {
   @Prop({ default: null })
   deletedAt: Date;
 
-  @Prop()
-  otp: string;
-
   // New field to differentiate auth provider
   @Prop({ required: true, enum: ['local', 'google'], default: 'local' })
   authProvider: string;

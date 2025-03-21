@@ -2,14 +2,26 @@ version: '2.2'
 services:
   # Backend Service (NestJS)
   backend:
-    container_name: backend
+    container_name: backend_https
     build:
-      context: /home/root/BE2
+      context: ./https
       dockerfile: Dockerfile
     env_file:
       - .env.production
     ports:
       - "8000:8000"
+    networks:
+      - mge2116net
+
+  backend2:
+    container_name: backend_http
+    build:
+      context: ./http
+      dockerfile: Dockerfile
+    env_file:
+      - .env.production
+    ports:
+      - "8001:8000"
     networks:
       - mge2116net
 
