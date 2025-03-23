@@ -9,7 +9,7 @@ export class User {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ default: 'https://asset.cloudinary.com/dfbv4omnx/553d9ff1c8dd8f9bb00c724a56ef7fbd' })
+  @Prop({ default: 'https://res.cloudinary.com/dfbv4omnx/image/upload/v1741080748/DALL_E_2025-03-04_16.32.10_-_A_Pixar-style_3D_avatar_of_an_androgynous_character_with_a_friendly_and_casual_expression_styled_for_a_billiards_theme._The_character_has_medium-leng_htcagg.webp' })
   avatar: string;
 
   @Prop()

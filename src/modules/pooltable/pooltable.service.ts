@@ -31,7 +31,7 @@ export class PoolTableService {
       // Tạo mã QR từ ID của bàn bi-a
       const qrCodeData = savedPoolTable._id;
 
-      const teamWaitingRoomUrl = `https://fewebballpooling.vercel.app/team-waiting-room/tableId=${qrCodeData}`;
+      const teamWaitingRoomUrl = `https://billiards-score-app.vercel.app/WaitingPage/${qrCodeData}`;
 
       const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
 
@@ -60,10 +60,18 @@ export class PoolTableService {
 
   //#region update
   async update(id: string, updatePoolTableDto: UpdatePoolTableDto): Promise<PoolTable> {
-    const poolTable = await this.poolTableModel.findById(id).exec();
-    if (!poolTable) {
-      throw new NotFoundException('Pool table not found');
-    }
+    const poolTable = await this.findOne(id);
+
+    const qrCodeData = poolTable._id;
+    const teamWaitingRoomUrl = `https://billiards-score-app.vercel.app/WaitingPage/${qrCodeData}`;
+
+    const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
+    const uploadResult = await this.uploadService.uploadImage({
+      buffer: Buffer.from(qrCodeImage.split(',')[1], 'base64'),
+      originalname: `${qrCodeData}-qrcode.png`,
+    } as Express.Multer.File, 'qrcodes');
+
+    poolTable.qrCodeImg = uploadResult;
 
     // Cập nhật các thuộc tính của bàn bi-a
     Object.assign(poolTable, updatePoolTableDto);
