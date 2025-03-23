@@ -35,7 +35,7 @@ export class PoolTableController {
 
   @Put(':id')
   @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
-  async update(id: string, @Body() updatePoolTableDto: UpdatePoolTableDto) {
+  async update(@Param('id') id: string, @Body() updatePoolTableDto: UpdatePoolTableDto) {
     return this.poolTableService.update(id, updatePoolTableDto);
   }
 
