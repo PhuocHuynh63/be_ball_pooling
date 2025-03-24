@@ -283,28 +283,41 @@ export class GameService {
   }
   //#endregion
 
-  async getPlayers(matchId: string): Promise<{ accounts: string[]; guests: any[] }> {
+  async getPlayers(matchId: string): Promise<{ accounts: any[]; guests: any[] }> {
     // Query teams for account players (members)
     const teams = await this.teamModel.find({
       match: new Types.ObjectId(matchId),
       isDeleted: { $ne: true }
     });
-    const accounts: string[] = [];
+    const accountIds: string[] = [];
     teams.forEach(team => {
-      // Assuming team.members is an array of account ids (strings)
       team.members.forEach(member => {
         if (member) {
-          accounts.push(member.toString());
+          accountIds.push(member.toString());
         }
       });
     });
 
-    // Get guest players from Redis
+    // Populate user info for each account id using the UserService
+    const accounts = await Promise.all(
+      accountIds.map(async (id) => {
+        try {
+          const user = await this.userService.findOne(id);
+          return user;
+        } catch (error) {
+          this.logger.error(`Error fetching user with id ${id}:`, error);
+          return { id, error: 'User not found' };
+        }
+      })
+    );
+
+    // Get guest players from Redis & return only the name
     const key = `room:${matchId}:guests`;
     const guestEntries = await this.redisClient.lRange(key, 0, -1);
     const guests = guestEntries.map(entry => {
       try {
-        return JSON.parse(entry);
+        const guest = JSON.parse(entry);
+        return { name: guest.name };
       } catch (err) {
         this.logger.error('Error parsing guest entry from Redis:', err);
         return null;
