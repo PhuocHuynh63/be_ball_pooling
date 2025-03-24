@@ -9,7 +9,7 @@ export class Match extends Document {
   @Prop({ required: true })
   status: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, default: null, required: false })
   mode_game: string;
 
   @Prop({ type: Types.ObjectId, ref: 'PoolTable', required: true })

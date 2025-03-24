@@ -39,7 +39,6 @@ export class GameGateway implements OnGatewayConnection {
       hostUserId?: string;
       guestName?: string;
       pooltable: string;
-      mode_game: string;
     },
     @ConnectedSocket() client: Socket,
   ) {
@@ -47,12 +46,12 @@ export class GameGateway implements OnGatewayConnection {
     const accountUserId = client.data.userId;
     const effectiveHostUserId = accountUserId || payload.hostUserId;
 
+    // Pass the nullable mode_game to createRoom
     const { roomId, match } = await this.gameService.createRoom({
       matchId: payload.matchId,
       payloadHostUserId: payload.hostUserId,
       guestName: payload.guestName,
       pooltable: payload.pooltable,
-      mode_game: payload.mode_game,
       effectiveHostUserId,
     });
 

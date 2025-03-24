@@ -30,7 +30,6 @@ export class GameService {
     payloadHostUserId?: string;
     guestName?: string;
     pooltable: string;
-    mode_game: string;
     effectiveHostUserId?: string;
   }): Promise<{ roomId: string; match: any }> {
     // Validate the pooltable exists
@@ -55,9 +54,7 @@ export class GameService {
       match = new this.matchModel({
         status: 'pending',
         hostType,
-        // Convert the pooltable field to an ObjectId
         pooltable: new Types.ObjectId(payload.pooltable),
-        mode_game: payload.mode_game
       });
       await match.save();
       this.logger.debug("New match created:", match);
