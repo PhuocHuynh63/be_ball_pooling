@@ -62,7 +62,7 @@ export class GameGateway implements OnGatewayConnection {
     }
     client.join(roomId);
     this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
-    client.emit('roomCreated', {roomId, matchId: match._id });
+    client.emit('roomCreated', { roomId, matchId: match._id });
     return;
   }
   //#endregion
@@ -267,7 +267,7 @@ export class GameGateway implements OnGatewayConnection {
   ) {
     const players = await this.gameService.getPlayers(payload.matchId);
     this.logger.debug(`Fetching players for match ${payload.matchId}:`, players);
-    return { event: 'matchPlayers', matchId: payload.matchId, players };
+    return client.emit('matchPlayers', { matchId: payload.matchId, players });
   }
   //#endregion
 
