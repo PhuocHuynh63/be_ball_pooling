@@ -51,8 +51,16 @@ export class UserController {
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto, @UploadedFile() file: Express.Multer.File) {
-    return await this.userService.updateUser(id, updateUsersDto, file);
+    return await this.userService.updateUser(id, updateUsersDto);
   }
+
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Put('avatar/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateAvatar(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    return await this.userService.updateUserAvatar(id, file);
+  }
+
 
 
   @Delete(':id')
