@@ -21,14 +21,16 @@ export class GoogleAuthController {
   @ResponseMessage('Google login success')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const user = req.user;
+
+    console.log('req', req.headers);
     const { access_token_jwt } = await this.googleAuthService.loginOrSignup(user);
 
     // Kiểm tra xem yêu cầu đến từ ứng dụng di động hay không
-    const isMobileApp = req.headers['x-mobile-app'] === 'true';
+    const isMobileApp = req.headers['x-requested-with'] === 'com.mycorp.myapp';
 
     if (isMobileApp) {
       // Trả về dữ liệu JSON cho ứng dụng di động kèm theo URL chuyển hướng
-      const redirectUrl = `http://192.168.1.9:8081/?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
+      const redirectUrl = `myapp://HomeScreen?user=${encodeURIComponent(JSON.stringify(user))}&token=${access_token_jwt}`;
       return res.json({
         message: 'Google login success',
         redirectUrl,
