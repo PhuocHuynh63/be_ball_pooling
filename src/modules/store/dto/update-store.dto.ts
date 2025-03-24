@@ -38,13 +38,4 @@ export class UpdateStoreDto {
     description: 'Status of the store',
   })
   isDeleted: boolean;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  @ApiPropertyOptional({
-    example: 'TP.HCM',
-    description: 'Location of the store',
-  })
-  location?: string;
 }

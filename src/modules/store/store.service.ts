@@ -72,7 +72,8 @@ export class StoreService {
       throw new NotFoundException('Store not found');
     }
 
-    if (updateStoreDto.manager) {
+    // Check if the manager is being updated and validate the new manager
+    if (updateStoreDto.manager && updateStoreDto.manager !== existingStore.manager.toString()) {
       const manager = await this.userService.findOne(updateStoreDto.manager);
       if (!manager) {
         throw new BadRequestException('Manager does not exist');
@@ -91,6 +92,22 @@ export class StoreService {
       }
     }
 
+    // Check if the address is being updated and validate the new address
+    if (updateStoreDto.address && updateStoreDto.address.trim().toLowerCase() !== existingStore.address.trim().toLowerCase()) {
+      const normalizedAddress = updateStoreDto.address.trim().toLowerCase();
+      const existingStoreWithAddress = await this.storeModel.findOne({
+        address: normalizedAddress,
+        _id: { $ne: id }
+      }).exec();
+      if (existingStoreWithAddress) {
+        throw new ConflictException('Store with this address already exists');
+      }
+    } else {
+      // If the address is the same, remove it from the update DTO to avoid unnecessary update
+      delete updateStoreDto.address;
+    }
+
+    // If no conflicts, update the store
     Object.assign(existingStore, updateStoreDto);
     try {
       return await existingStore.save();
