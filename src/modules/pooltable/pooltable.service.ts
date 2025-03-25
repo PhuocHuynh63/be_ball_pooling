@@ -73,8 +73,11 @@ export class PoolTableService {
 
     poolTable.qrCodeImg = uploadResult;
 
+    updatePoolTableDto.store = new Types.ObjectId(updatePoolTableDto.store);
+
     // Cập nhật các thuộc tính của bàn bi-a
     Object.assign(poolTable, updatePoolTableDto);
+
     return poolTable.save();
   }
   //#endregion

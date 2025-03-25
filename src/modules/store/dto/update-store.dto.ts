@@ -2,6 +2,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { CreateStoreDto } from './create-store.dto';
 import { IsString, IsNotEmpty, IsOptional, IsMongoId } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Types } from 'mongoose';
 
 export class UpdateStoreDto {
   @IsString()
@@ -29,7 +30,7 @@ export class UpdateStoreDto {
     example: '679372039468782a7f1e43ea',
     description: 'Manager ID of the store',
   })
-  manager?: string;
+  manager?: string | Types.ObjectId;
 
   @IsNotEmpty()
   @IsOptional()

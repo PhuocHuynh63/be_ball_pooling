@@ -90,6 +90,9 @@ export class StoreService {
       if (managerStore) {
         throw new ConflictException('Manager already manages another store');
       }
+
+      // Convert manager to ObjectId
+      updateStoreDto.manager = new Types.ObjectId(updateStoreDto.manager);
     }
 
     // Check if the address is being updated and validate the new address

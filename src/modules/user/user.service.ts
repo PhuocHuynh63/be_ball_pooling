@@ -188,8 +188,8 @@ export class UserService {
   //#endregion
 
   //#region findOne
-  async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
+  async findOne(id: string | Types.ObjectId): Promise<User> {
+    const user = await this.userModel.findById(id || new Types.ObjectId(id)).exec();
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
