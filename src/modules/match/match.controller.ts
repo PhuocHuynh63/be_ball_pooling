@@ -22,7 +22,7 @@ export class MatchController {
   }
 
   @Get()
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   async findAll() {
     return this.matchService.findAll();
   }
