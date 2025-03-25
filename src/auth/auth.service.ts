@@ -4,8 +4,6 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { UploadService } from 'src/upload/upload.service';
-import { UserRoles } from 'src/constant/users.enums';
 import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
@@ -17,7 +15,8 @@ export class AuthService {
   ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findEmailandPassword(email, password);
+    const emailLower = email.toLowerCase();
+    const user = await this.userService.findEmailandPassword(emailLower, password);
     if (!user) {
       return null;
     }
@@ -46,12 +45,14 @@ export class AuthService {
   //tạo user bth
   async handleRegister(registerDto: CreateAuthDto) {
     try {
-      const otp = this.mailService.verifyOtp(registerDto.email, registerDto.otp);
+      const registerEmailLowerCase = registerDto.email.toLowerCase();
+      const otp = this.mailService.verifyOtp(registerEmailLowerCase, registerDto.otp);
       if (!otp) {
         throw new UnauthorizedException('Invalid OTP');
       }
       return await this.userService.createUser({
         ...registerDto,
+        email: registerEmailLowerCase,
       });
     } catch (error) {
       if (error.code === 11000) {

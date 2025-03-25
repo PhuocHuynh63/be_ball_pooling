@@ -20,13 +20,13 @@ export class StoreController {
   ) { }
 
   @Get('search')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ResponseMessage('Get stores success')
   async findStoreBySearchOrFilter(@Query() query: FindStoreDto) {
     return this.storeService.findStoreBySearchOrFilter(query);
   }
 
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ApiQuery({ name: 'action', required: true, type: String })
   @ApiQuery({ name: 'id', required: false, type: String })
   @Get()
@@ -47,7 +47,7 @@ export class StoreController {
   }
 
   @Get(':id')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ResponseMessage('Get stores success')
   async findById(@Param('id') id: string) {
     return this.storeService.findOne(id);
@@ -55,7 +55,7 @@ export class StoreController {
 
 
   @Get('viewPooltable/:id')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ApiParam({
     name: 'id',
     required: true,
@@ -69,7 +69,7 @@ export class StoreController {
   }
 
   @Get('showDeleted')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ResponseMessage('Get stores success')
   async showDeleted() {
     return this.storeService.showDeleted();
@@ -77,7 +77,7 @@ export class StoreController {
 
 
   @Get('/user/withoutStore')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   @ResponseMessage('Get stores success')
   async findManagersWithoutStore() {
     return this.storeService.findManagersWithoutStore();
