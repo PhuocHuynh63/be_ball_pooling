@@ -63,8 +63,7 @@ export class StoreController {
     example: '67d1bfffa15917a16219d829',
     description: 'ID of the store'
   })
-  async findPooltable(@Param('id') id: string) {
-
+  async findPooltableAll(@Param('id') id: string) {
     return this.poolTableService.findAllPooltableByStoreID(id);
   }
 

@@ -16,7 +16,7 @@ export class MatchController {
 
 
   @Get('search')
-  @Roles(UserRoles.ADMIN)
+  @Roles(UserRoles.ADMIN, UserRoles.MANAGER)
   async searchMatch(@Query() query: FindMatchDto) {
     return this.matchService.findMatchBySearchOrFilter(query);
   }
