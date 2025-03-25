@@ -280,6 +280,11 @@ export class GameService {
   }
   //#endregion
 
+  async getUserInfo(userId: string): Promise<{ name: string }> {
+    // This shields the gateway from direct access to the private userService.
+    return this.userService.findOne(userId);
+  }
+
   async getPlayers(matchId: string): Promise<{ accounts: any[]; guests: any[] }> {
     // Query teams for account players (members)
     const teams = await this.teamModel.find({

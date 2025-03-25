@@ -1,11 +1,13 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection, WebSocketServer } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { GameService } from '../services/game/game.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class GameGateway implements OnGatewayConnection {
+  @WebSocketServer()
+  server: Server;
   private readonly logger = new Logger(GameGateway.name);
 
   constructor(
@@ -75,7 +77,7 @@ export class GameGateway implements OnGatewayConnection {
     const userId = client.data.userId;
     if (!userId) throw new NotFoundException('Authenticated user id not found');
     const newTeamId = await this.gameService.changeTeam({ currentTeamId: payload.currentTeamId, newTeamId: payload.newTeamId, userId });
-    return client.emit ('teamChanged', { newTeamId });
+    return client.emit('teamChanged', { newTeamId });
   }
   //#endregion
 
@@ -92,7 +94,7 @@ export class GameGateway implements OnGatewayConnection {
     // This method does not remove them from the room.
     const teamInfo = await this.gameService.leaveTeam({ teamId: payload.teamId, userId });
     this.logger.debug(`User ${userId} left team ${payload.teamId} but remains in the room`);
-    return client.emit('teamLeft', {teamId: payload.teamId, info: teamInfo });
+    return client.emit('teamLeft', { teamId: payload.teamId, info: teamInfo });
   }
   //#endregion
 
@@ -116,7 +118,7 @@ export class GameGateway implements OnGatewayConnection {
 
     client.leave(roomId);
     this.logger.debug(`Socket ${client.id} left room ${roomId}`);
-    return client.emit('roomLeft', {roomId});
+    return client.emit('roomLeft', { roomId });
   }
   //#endregion
 
@@ -144,7 +146,7 @@ export class GameGateway implements OnGatewayConnection {
     const newTeam = await this.gameService.addTeam({ matchId: payload.matchId, userId: effectiveUserId });
     client.join(roomId);
     this.logger.debug(`New team created: ${newTeam.teamName} (${newTeam._id}) in room ${roomId} by ${client.data.userId || 'guest'}`);
-    return client.emit('teamAdded',{ roomId, team: newTeam });
+    return client.emit('teamAdded', { roomId, team: newTeam });
   }
   //#endregion
 
@@ -172,7 +174,7 @@ export class GameGateway implements OnGatewayConnection {
     const roomId = `match-${payload.matchId}`;
     const newTeam = await this.gameService.createTeam({ matchId: payload.matchId, userId: payload.userId });
     client.join(roomId);
-    return client.emit('teamCreated', {roomId, teamId: newTeam._id });
+    return client.emit('teamCreated', { roomId, teamId: newTeam._id });
   }
   //#endregion
 
@@ -187,16 +189,16 @@ export class GameGateway implements OnGatewayConnection {
     const userId = client.data.userId;
 
     if (!teamId) {
-      return client.emit('joinTeamError', {message: 'teamId must be provided' });
+      return client.emit('joinTeamError', { message: 'teamId must be provided' });
     }
     if (!userId) {
-      return client.emit('joinTeamError', {message: 'Authenticated user id not found' });
+      return client.emit('joinTeamError', { message: 'Authenticated user id not found' });
     }
 
     // First, get the team without modifying it, so we can know its match id.
     const team = await this.gameService.findTeamById(teamId);
     if (!team) {
-      return client.emit('joinTeamError',{ message: `Team with id ${teamId} not found` });
+      return client.emit('joinTeamError', { message: `Team with id ${teamId} not found` });
     }
     // Derive the roomId from the team match id.
     const roomId = `match-${team.match.toString()}`;
@@ -252,7 +254,7 @@ export class GameGateway implements OnGatewayConnection {
         return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
       } else {
         this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
-        return client.emit('roomJoined', {roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' });
+        return client.emit('roomJoined', { roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' });
       }
     }
   }
@@ -270,6 +272,29 @@ export class GameGateway implements OnGatewayConnection {
   }
   //#endregion
 
+  //#region getRoomPlayers
+  @SubscribeMessage('getAllRoomPlayers')
+  async handleGetAllRoomPlayers(
+    @MessageBody() payload: { matchId: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    // get account users (with their user info) and guests from Redis
+    const { accounts, guests } = await this.gameService.getPlayers(payload.matchId);
+
+    // (Assuming getPlayers returns an object like { accounts: [ { _id, name, ... } ], guests: [...] })
+
+    // If your Redis guests have a different shape, adjust here.
+    const combinedPlayers = [
+      ...accounts.map(a => ({ userId: a._id, userName: a.name })),
+      ...guests.map(g => ({ guestName: g.name }))
+    ];
+
+    // Broadcast the combined list to everyone in the match room.
+    const roomId = `match-${payload.matchId}`;
+    this.server.in(roomId).emit('allRoomPlayers', { matchId: payload.matchId, players: combinedPlayers });
+  }
+  //#endregion
+
   //#region getRoomGuests
   @SubscribeMessage('getRoomGuests')
   async handleGetRoomGuests(
@@ -278,6 +303,54 @@ export class GameGateway implements OnGatewayConnection {
   ) {
     const guests = await this.gameService.getRoomGuests(payload.matchId);
     return client.emit('roomGuests', { matchId: payload.matchId, guests });
+  }
+  //#endregion
+
+  //#region getWaitingRoomPlayers
+  @SubscribeMessage('getWaitingRoomPlayers')
+  async handleGetWaitingRoomPlayers(
+    @MessageBody() payload: { matchId: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomId = `match-${payload.matchId}`;
+
+    // Get account users who are in the waiting room (have joined the room but not stored in a team)
+    const accountPlayers = await Promise.all(
+      (await this.server.in(roomId).fetchSockets())
+        .filter(socket => socket.data.userId)
+        .map(async socket => {
+          try {
+            const user = await this.gameService.getUserInfo(socket.data.userId);
+            return { userId: socket.data.userId, userName: user.name, socketId: socket.id };
+          } catch (error) {
+            this.logger.error(`Error fetching info for user ${socket.data.userId} on socket ${socket.id}:`, error);
+            return { userId: socket.data.userId, userName: 'Unknown', socketId: socket.id };
+          }
+        })
+    );
+
+    // Get guest players from Redis (as stored when they joined the room)
+    const guestPlayers = await this.gameService.getRoomGuests(payload.matchId);
+    // guestPlayers is expected to return an array of objects including at least { guestName, socketId }.
+
+    // Combine both lists.
+    const waitingPlayers = [...accountPlayers, ...guestPlayers];
+
+    // Broadcast the combined list to everyone in the room.
+    this.server.in(roomId).emit('waitingRoomPlayers', { matchId: payload.matchId, players: waitingPlayers });
+  }
+  //#endregion
+
+  //#region startMatch
+  @SubscribeMessage('startMatch')
+  async handleStartMatch(
+    @MessageBody() payload: { matchId: string },
+  ) {
+    const roomId = `match-${payload.matchId}`;
+    // Broadcast to all sockets in the room
+    this.server.in(roomId).emit('startMatch', { matchId: payload.matchId });
+    this.logger.debug(`Broadcasting startMatch to room ${roomId}`);
+    return;
   }
   //#endregion
 
@@ -310,7 +383,7 @@ export class GameGateway implements OnGatewayConnection {
     const roomId = `match-${updatedTeam.match.toString()}`;
     // Broadcast updated score event to all clients in the room.
     client.to(roomId).emit('scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
-    return client.emit( 'scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
+    return client.emit('scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
   }
   //#endregion
 }
