@@ -1,16 +1,16 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Match } from '@modules/match/entities/match.schema';
 import { Team } from '@modules/team/entities/team.schemas';
 import { PoolTableService } from '@modules/pooltable/pooltable.service';
 import { UserService } from '@modules/user/user.service';
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
-  public redisClient;
+  public redisClient: RedisClientType;
 
   constructor(
     @InjectModel(Match.name) private matchModel: Model<Match>,
@@ -18,10 +18,20 @@ export class GameService {
     private readonly poolTableService: PoolTableService,
     private readonly userService: UserService,
   ) {
+    // Create Redis client with a reconnect strategy
     this.redisClient = createClient({
       url: process.env.REDIS_URI,
+      socket: {
+        reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
+      },
     });
-    this.redisClient.connect().catch(console.error);
+    // Log any Redis connection errors without crashing the server
+    this.redisClient.on('error', (err) => {
+      this.logger.error('Redis Client Error:', err);
+    });
+    this.redisClient.connect().catch((err) => {
+      this.logger.error('Error connecting to Redis:', err);
+    });
   }
 
   //#region createRoom
@@ -32,22 +42,31 @@ export class GameService {
     pooltable: string;
     effectiveHostUserId?: string;
   }): Promise<{ roomId: string; match: any }> {
-    // Validate the pooltable exists
+    // Validate the pool table exists.
     try {
       await this.poolTableService.findOne(payload.pooltable);
     } catch (error) {
       throw new NotFoundException(`Pool table with id ${payload.pooltable} not found`);
     }
-
+  
+    // Check if the pool table is already in an active match.
+    const activeMatch = await this.matchModel.findOne({
+      pooltable: payload.pooltable,
+      status: { $in: ['pending', 'ongoing'] } // or other statuses as appropriate
+    });
+    if (activeMatch) {
+      throw new ConflictException(`Pool table ${payload.pooltable} is already used in an active match (id: ${activeMatch._id}).`);
+    }
+  
     let roomId: string;
     let match;
-
-    // If matchId provided, try finding match.
+  
+    // If matchId provided, try to find match.
     if (payload.matchId) {
       match = await this.matchModel.findById(payload.matchId);
       this.logger.debug("Found match with provided matchId:", match);
     }
-
+  
     // If no match, create one.
     if (!match) {
       const hostType = payload.effectiveHostUserId ? 'account' : 'guest';
@@ -58,9 +77,9 @@ export class GameService {
       });
       await match.save();
       this.logger.debug("New match created:", match);
-
+  
       roomId = `match-${match._id}`;
-
+  
       // Create Team 1, using ObjectId for account hosts or storing guestName.
       const team1 = new this.teamModel({
         teamName: "Team 1",
@@ -71,7 +90,7 @@ export class GameService {
       });
       await team1.save();
       this.logger.debug("New team created (Team 1):", team1);
-
+  
       // Create Team 2 as an empty team.
       const team2 = new this.teamModel({
         teamName: "Team 2",
@@ -336,6 +355,19 @@ export class GameService {
     const guests = guestData.map(data => JSON.parse(data));
     this.logger.debug(`Parsed room guests for match ${matchId}:`, guests);
     return guests;
+  }
+  //#endregion
+
+  //#region startMatch
+  async startMatch(matchId: string): Promise<any> {
+    const match = await this.matchModel.findById(matchId);
+    if (!match) {
+      throw new NotFoundException(`Match with id ${matchId} not found`);
+    }
+    match.status = 'ongoing';
+    await match.save();
+    this.logger.debug(`Match ${matchId} status updated to 'ongoing'`);
+    return match;
   }
   //#endregion
 
