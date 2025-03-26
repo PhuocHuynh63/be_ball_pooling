@@ -43,28 +43,29 @@ export class GameGateway implements OnGatewayConnection {
       pooltable: string;
     },
     @ConnectedSocket() client: Socket,
-  ) {
-    // Determine the host: use authenticated uid if available.
-    const accountUserId = client.data.userId;
-    const effectiveHostUserId = accountUserId || payload.hostUserId;
+  ): Promise<void> {
+    try {
+      const accountUserId = client.data.userId;
+      const effectiveHostUserId = accountUserId || payload.hostUserId;
+      const { roomId, match } = await this.gameService.createRoom({
+        matchId: payload.matchId,
+        payloadHostUserId: payload.hostUserId,
+        guestName: payload.guestName,
+        pooltable: payload.pooltable,
+        effectiveHostUserId,
+      });
 
-    // Pass the nullable mode_game to createRoom
-    const { roomId, match } = await this.gameService.createRoom({
-      matchId: payload.matchId,
-      payloadHostUserId: payload.hostUserId,
-      guestName: payload.guestName,
-      pooltable: payload.pooltable,
-      effectiveHostUserId,
-    });
-
-    // For guest initiators, store guest info in Redis.
-    if (!accountUserId) {
-      await this.gameService.storeGuestInfo(match._id.toString(), client.id, payload.guestName);
+      // If a guest creates the room, store guest info.
+      if (!accountUserId) {
+        await this.gameService.storeGuestInfo(match._id.toString(), client.id, payload.guestName);
+      }
+      client.join(roomId);
+      this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
+      client.emit('roomCreated', { roomId, matchId: match._id });
+    } catch (error) {
+      // Emit an error event that the client can listen to.
+      client.emit('roomCreateError', { message: error.message });
     }
-    client.join(roomId);
-    this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
-    client.emit('roomCreated', { roomId, matchId: match._id });
-    return;
   }
   //#endregion
 
@@ -345,11 +346,13 @@ export class GameGateway implements OnGatewayConnection {
   @SubscribeMessage('startMatch')
   async handleStartMatch(
     @MessageBody() payload: { matchId: string },
-  ) {
+  ): Promise<void> {
     const roomId = `match-${payload.matchId}`;
-    // Broadcast to all sockets in the room
+    // Update the match status in the GameService.
+    await this.gameService.startMatch(payload.matchId);
+    // Broadcast to all sockets in the room.
     this.server.in(roomId).emit('startMatch', { matchId: payload.matchId });
-    this.logger.debug(`Broadcasting startMatch to room ${roomId}`);
+    this.logger.debug(`Broadcasting startMatch to room ${roomId} and updated match status to 'ongoing'`);
     return;
   }
   //#endregion
