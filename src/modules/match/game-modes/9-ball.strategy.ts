@@ -1,15 +1,15 @@
-import { Match } from '../entities/Match.schema';
+// import { Match } from '../entities/Match.schema';
 
-export class NineBallStrategy {
-  calculateScore(match: Match) {
-    let winner = null;
+// export class NineBallStrategy {
+//   calculateScore(match: Match) {
+//     let winner = null;
 
-    for (const progress of match.progress) {
-      if (progress.ballsPotted.includes('9') && !progress.foul) {
-        winner = progress.player;
-        break;
-      }
-    }
+//     for (const progress of match.progress) {
+//       if (progress.ballsPotted.includes('9') && !progress.foul) {
+//         winner = progress.player;
+//         break;
+//       }
+//     }
 
     if (winner) {
       match.result = {
@@ -28,4 +28,5 @@ export class NineBallStrategy {
     }
   }
 
-}
+
+// }

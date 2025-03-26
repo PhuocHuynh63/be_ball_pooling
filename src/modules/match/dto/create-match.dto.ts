@@ -1,48 +1,28 @@
-import { IsNotEmpty, IsString, IsArray, IsMongoId, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-
-class UserDto {
-  @IsMongoId()
-  user: string;
-
-  @IsString()
-  team?: string;
-}
-
-class ProgressDto {
-  @IsNotEmpty()
-  _id: number;
-
-  @IsMongoId()
-  player: string;
-
-  @IsArray()
-  score: number[];
-
-  @IsString()
-  status: string;
-}
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsMongoId } from 'class-validator';
 
 export class CreateMatchDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UserDto)
-  users: UserDto[];
-
   @IsNotEmpty()
   @IsString()
+  @ApiProperty({
+    example: 'ready',
+    description: 'Status of the match',
+  })
   status: string;
 
   @IsNotEmpty()
   @IsString()
+  @ApiProperty({
+    example: '9-ball',
+    description: 'Mode of the game',
+  })
   mode_game: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProgressDto)
-  progress: ProgressDto[];
-
-  @IsMongoId()
   @IsNotEmpty()
+  @IsMongoId()
+  @ApiProperty({
+    example: '67ceec0d423880c8153405fc',
+    description: 'ID of the pool table',
+  })
   pooltable: string;
 }

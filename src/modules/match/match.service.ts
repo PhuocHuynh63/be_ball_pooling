@@ -1,15 +1,14 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Match } from './entities/Match.schema';
+import { Match } from './entities/match.schema';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
-import { UpdateProgressDto } from './dto/update-progress.dto';
 import { MatchResponseDto } from './dto/match-response.dto';
 import { UserService } from '../user/user.service';
 import { PoolTableService } from '../pooltable/pooltable.service';
-import { GameModeStrategy } from './game-modes/game-mode.strategy';
-import { EightBallStrategy } from './game-modes/8-ball.strategy';
+import { FindMatchDto } from './dto/find-match.dto';
+import { getSortOptions } from 'src/utils/utils';
 
 @Injectable()
 export class MatchService {
@@ -19,47 +18,31 @@ export class MatchService {
     private readonly poolTableService: PoolTableService,
   ) { }
 
+  //#region create
   async create(createMatchDto: CreateMatchDto): Promise<Match> {
-    for (const user of createMatchDto.users) {
-      const existingUser = await this.userService.findOne(user.user);
-      if (!existingUser) {
-        throw new BadRequestException(`User with ID ${user.user} does not exist`);
-      }
-    }
 
     const poolTable = await this.poolTableService.findOne(createMatchDto.pooltable);
     if (!poolTable) {
       throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} does not exist`);
     }
+    if (poolTable.status !== 'available') {
+      throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} is not available`);
+    }
 
-    const createdMatch = new this.matchModel(createMatchDto);
+    const mode_game = poolTable.tableType.compatible_mode;
+    if (!mode_game.includes(createMatchDto.mode_game)) {
+      throw new BadRequestException(`Pool table with ID ${createMatchDto.pooltable} is not compatible with mode ${mode_game}`);
+    }
+
+    const createdMatch = new this.matchModel({
+      ...createMatchDto,
+      pooltable: new Types.ObjectId(createMatchDto.pooltable)
+    });
     return createdMatch.save();
   }
+  //#endregion
 
-  async findAll(): Promise<Match[]> {
-    return this.matchModel.find({ deletedAt: null }).exec();
-  }
-
-  async findOne(id: string): Promise<MatchResponseDto> {
-    const match = await this.matchModel.findById(id).exec();
-    if (!match || match.deletedAt) {
-      throw new NotFoundException('Match not found');
-    }
-
-    // Check if the 8-ball has been potted and if the game is finished
-    const isEightBallPotted = match.progress.some(stroke => stroke.ballsPotted.includes('8'));
-    const isGameFinished = match.status === 'completed';
-
-    if (!isEightBallPotted || !isGameFinished) {
-      return {
-        match: match.toObject(),
-        message: 'Game is not finished',
-      };
-    }
-
-    return { match };
-  }
-
+  //#region update
   async update(id: string, updateMatchDto: UpdateMatchDto): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
@@ -69,104 +52,86 @@ export class MatchService {
     Object.assign(match, updateMatchDto);
     return match.save();
   }
+  //#endregion
 
-  async updateProgress(id: string, updateProgressDto: UpdateProgressDto): Promise<Match> {
-    const match = await this.matchModel.findById(id).exec();
-    if (!match || match.deletedAt) {
-      throw new NotFoundException('Match not found');
-    }
-  
-    // Track potted balls
-    const pottedBalls = new Set<string>();
-    match.progress.forEach(stroke => {
-      stroke.ballsPotted.forEach(ball => pottedBalls.add(ball));
-    });
-  
-    // Append new progress items with incremented _id values
-    const currentMaxId = match.progress.length > 0 ? Math.max(...match.progress.map(p => p._id)) : 0;
-    const newProgress = updateProgressDto.progress.map((stroke, index) => {
-      // Check for already potted balls
-      stroke.ballsPotted.forEach(ball => {
-        if (pottedBalls.has(ball)) {
-          throw new BadRequestException(`Ball ${ball} has already been potted`);
-        }
-        pottedBalls.add(ball);
-      });
-  
-      return {
-        _id: currentMaxId + index + 1, // Increment _id
-        player: stroke.player,
-        ballsPotted: stroke.ballsPotted,
-        foul: stroke.foul ?? false, // Ensure foul is always set
-      };
-    });
-  
-    match.progress.push(...newProgress);
-    match.updatedAt = new Date();
-  
-    // Check if the 8-ball has been potted and update status to finished
-    if (match.mode_game === '8-ball' && newProgress.some(stroke => stroke.ballsPotted.includes('8'))) {
-      match.status = 'finished';
-    }
-  
-    // Calculate the score based on the progress
-    const gameModeStrategy = new GameModeStrategy(match.mode_game);
-    gameModeStrategy.calculateScore(match);
-  
-    return match.save();
-  }
-
-  async undoLastProgress(id: string): Promise<Match> {
-    const match = await this.matchModel.findById(id).exec();
-    if (!match || match.deletedAt) {
-      throw new NotFoundException('Match not found');
-    }
-
-    if (match.progress.length === 0) {
-      throw new BadRequestException('No progress to undo');
-    }
-
-    // Remove the last progress item
-    const lastProgress = match.progress.pop();
-
-    // Update the set of potted balls
-    if (lastProgress) {
-      lastProgress.ballsPotted.forEach(ball => {
-        // Remove the ball from the set of potted balls
-        match.progress.forEach(stroke => {
-          stroke.ballsPotted = stroke.ballsPotted.filter(pottedBall => pottedBall !== ball);
-        });
-      });
-    }
-
-    match.updatedAt = new Date();
-    return match.save();
-  }
-
+  //#region delete
   async delete(id: string): Promise<Match> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
       throw new NotFoundException('Match not found');
     }
 
-    match.status = 'deleted'; // Set status to deleted for soft deletion
+    match.status = 'deleted';
     match.deletedAt = new Date();
     return match.save();
   }
+  //#endregion
+d
+  //#region findAll
+  async findAll(): Promise<Match[]> {
+    return this.matchModel.find({ deletedAt: null }).exec();
+  }
+  //#endregion
 
-  async getMatchResult(id: string): Promise<any> {
+  //#region findOne
+  async findOne(id: string): Promise<MatchResponseDto> {
     const match = await this.matchModel.findById(id).exec();
     if (!match || match.deletedAt) {
       throw new NotFoundException('Match not found');
     }
-  
-    if (match.status !== 'completed' && match.status !== 'finished') {
-      throw new BadRequestException('Match is not finished');
-    }
-  
-    const gameModeStrategy = new EightBallStrategy();
-    const result = gameModeStrategy.calculateScore(match);
-  
-    return result;
+
+    // Removed progress-based checks since progress is now managed via the Team entity.
+    return { match: match.toObject() };
   }
+  //#endregion
+
+  //#region findMatchBySearchOrFilter
+  async findMatchBySearchOrFilter(query: FindMatchDto) {
+    //#region Pagination
+    const currentPage = query.current ? Number(query.current) : 1;
+    const pageSizePage = query.pageSize ? Number(query.pageSize) : 10;
+    const skip = (currentPage - 1) * pageSizePage;
+    //#endregion
+
+    //#region Filter
+    const filterConditions: Record<string, any> = {};
+
+    if (query.status) {
+      filterConditions.status = query.status;
+    }
+
+    if (query.mode_game) {
+      filterConditions.mode_game = query.mode_game;
+    }
+    //#endregion
+
+    //#region Sort
+    const allowedSortFields = ['createdAt', 'updatedAt', 'status', 'mode_game'];
+    const sortOptions = getSortOptions(query.sortBy, query.sortDirection, allowedSortFields);
+    //#endregion
+
+    const [result, totalItem] = await Promise.all([
+      this.matchModel
+        .find(filterConditions)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(pageSizePage)
+        .lean(),
+      this.matchModel.countDocuments(filterConditions)
+    ]);
+
+    const totalPage = Math.ceil(totalItem / pageSizePage);
+
+    return {
+      data: result,
+      pagination: {
+        current: currentPage,
+        pageSize: pageSizePage,
+        totalPage: totalPage,
+        totalItem: totalItem,
+      }
+    }
+  }
+  //#endregion
+
 }

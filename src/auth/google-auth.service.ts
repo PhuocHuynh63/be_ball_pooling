@@ -1,9 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/modules/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from 'src/modules/user/entities/User.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from '@modules/user/entities/user.schema';
+import { GoogleAuthDto } from './dto/google-auth.dto';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Injectable()
 export class GoogleAuthService {
@@ -11,8 +14,8 @@ export class GoogleAuthService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     this.client = new OAuth2Client(
       this.configService.get<string>('GOOGLE_CLIENT_ID'),
@@ -21,39 +24,31 @@ export class GoogleAuthService {
     );
   }
 
-  async getGoogleOAuthToken(code: string): Promise<string> {
-    const { tokens } = await this.client.getToken(code);
-    if (!tokens.id_token) {
-      throw new UnauthorizedException('Invalid Google token');
-    }
-    return tokens.id_token;
-  }
-
-  async verify(token: string) {
-    const ticket = await this.client.verifyIdToken({
-      idToken: token,
-      audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
-    });
-    const payload = ticket.getPayload();
-    if (!payload) {
-      throw new UnauthorizedException('Invalid Google token');
-    }
-    return payload;
-  }
-
-  async loginOrSignup(payload: any) {
-    let user = await this.userService.findByEmail(payload.email);
-    if (!user) {
-      user = await this.userService.create({
-        name: payload.name,
-        email: payload.email,
-        password: '', // No password needed for Google login
-        phone: '', // You can ask for phone number later
-        role: UserRole.USER,
+  async loginOrSignup(user: any): Promise<{ user: User; access_token_jwt: string }> {
+    const googleAuthDto: GoogleAuthDto = {
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    };
+    let existingUser = await this.userModel.findOne({ email: googleAuthDto.email }).exec();
+    if (!existingUser) {
+      existingUser = new this.userModel({
+        name: googleAuthDto.name,
+        email: googleAuthDto.email,
+        avatar: googleAuthDto.avatar,
+        password: '', // Dummy empty password
+        phone: '',
+        role: UserRoles.USER,
         status: 'active',
+        authProvider: 'google', // Explicitly set as google
       });
+      await existingUser.save();
     }
-    const accessToken = this.jwtService.sign({ email: user.email, sub: user._id, role: user.role });
-    return { user, access_token: accessToken };
+    const accessToken = this.jwtService.sign({
+      email: existingUser.email,
+      sub: existingUser._id,
+      role: existingUser.role,
+    });
+    return { user: existingUser, access_token_jwt: accessToken };
   }
 }

@@ -4,19 +4,19 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { UserRole } from '@modules/user/entities/User.schema';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService
-  ) {}
+    private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
-    console.log('AuthService: validateUser: email:', email); // Debugging statement
-    const user = await this.userService.findByEmail(email);
-    console.log('AuthService: validateUser: user:', user); // Debugging statement
+    const emailLower = email.toLowerCase();
+    const user = await this.userService.findEmailandPassword(emailLower, password);
     if (!user) {
       return null;
     }
@@ -42,14 +42,20 @@ export class AuthService {
     };
   }
 
+  //tạo user bth
   async handleRegister(registerDto: CreateAuthDto) {
-    if (registerDto.role !== UserRole.USER) {
-      throw new BadRequestException('Only user role can be assigned during registration');
-    }
     try {
-      return await this.userService.createUser(registerDto);
+      const registerEmailLowerCase = registerDto.email.toLowerCase();
+      const otp = this.mailService.verifyOtp(registerEmailLowerCase, registerDto.otp);
+      if (!otp) {
+        throw new UnauthorizedException('Invalid OTP');
+      }
+      return await this.userService.createUser({
+        ...registerDto,
+        email: registerEmailLowerCase,
+      });
     } catch (error) {
-      if (error.code === 11000) { // Duplicate key error code
+      if (error.code === 11000) {
         throw new ConflictException('Email already exists');
       }
       throw error;
@@ -58,14 +64,6 @@ export class AuthService {
 
   async checkActiveCode(id: string) {
     return await this.userService.checkActiveCode(id);
-  }
-
-  async sendCodeOTP(email: string) {
-    return await this.userService.sendCodeOTP(email);
-  }
-
-  async verifyCode(body: { email: string, code: string }) {
-    return await this.userService.verifyCode(body);
   }
 
   async activeAccount(body: { email: string }) {

@@ -1,4 +1,4 @@
-import { Match } from '../entities/Match.schema';
+import { Match } from '../entities/match.schema';
 
 export class MatchResponseDto {
   match: Match;

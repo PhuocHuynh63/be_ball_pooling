@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { UserRole } from '../../modules/user/entities/User.schema';
+import { UserRoles } from 'src/constant/users.enums';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -17,18 +17,15 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
+    const roles = this.reflector.get<UserRoles[]>('roles', context.getHandler());
+    if (!roles) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    // Debugging statements
-    // console.log('RolesGuard: user object:', user);
-    // if (user) {
-    //   console.log('RolesGuard: user role:', user.role);
-    // } else {
-    //   console.log('RolesGuard: user is undefined');
-    // }
-
-    if (user && (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER)) {
+    if (user && roles.includes(user.role)) {
       return true;
     }
 

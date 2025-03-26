@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Store } from '../../store/entities/Store.schema';
+import { Store } from '../../store/entities/store.schema';
 
 @Schema()
 export class PoolTable extends Document {
-  @Prop({ required: true, unique: true })
-  qrCode: string;
+  @Prop()
+  qrCodeImg: string;
 
   @Prop({ required: true })
   status: string;

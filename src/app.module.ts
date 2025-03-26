@@ -12,6 +12,12 @@ import { PoolTableModule } from './modules/pooltable/pooltable.module';
 import { StoreModule } from './modules/store/store.module';
 import { MatchModule } from './modules/match/match.module';
 import { AuthModule } from './auth/auth.module';
+import { TeamModule } from './modules/team/team.module';
+import { UploadModule } from './upload/upload.module';
+import { GameModule } from './gateways/game.module';
+import { RedisModule } from './redis/redis.module';
+import Mail from 'nodemailer/lib/mailer';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -65,6 +71,11 @@ import { AuthModule } from './auth/auth.module';
     MatchModule,
     AuthModule,
     StoreModule,
+    TeamModule,
+    UploadModule,
+    GameModule,
+    RedisModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

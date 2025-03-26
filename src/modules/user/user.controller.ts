@@ -1,28 +1,72 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, NotFoundException, BadRequestException, Put, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
+import { updateUsersDto } from './dto/update-user.dto';
+import { request } from 'https';
+import { UploadService } from 'src/upload/upload.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Roles } from 'src/decorator/role.decorator';
+import { UserRoles } from 'src/constant/users.enums';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { RolesGuard } from 'src/auth/passport/roles.guard';
+import { Public, ResponseMessage } from 'src/decorator/custom';
+import { FindUserDto } from './dto/user.dto';
+
 
 @Controller('users')
+@UseGuards(RolesGuard)
+@ApiBearerAuth('access-token')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService,
+    private readonly uploadService: UploadService
+  ) { }
 
-  @Post()
-  async create(@Body() createUserDto: CreateAuthDto) {
-    return await this.userService.create(createUserDto);
+
+  @Get('find')
+  @Roles(UserRoles.ADMIN)
+  @ApiQuery({ name: 'id', required: false, type: String })
+  @ApiQuery({ name: 'role', required: false, type: String })  // cho swagger
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'email', required: false, type: String })
+  async find(@Query() query: any) {
+    return await this.userService.find(query);
   }
 
-  @Get()
-  async findAll() {
-    return await this.userService.findAll();
+  @Get('search')
+  @Roles(UserRoles.ADMIN)
+  @ResponseMessage('Get user success')
+  async findUserBySearchOrFilter(
+    @Query() query: FindUserDto,
+  ) {
+    return await this.userService.findUserBySearchOrFilter(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  async findId(@Param('id') id: string) {
     return await this.userService.findOne(id);
   }
 
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto, @UploadedFile() file: Express.Multer.File) {
+    return await this.userService.updateUser(id, updateUsersDto);
+  }
+
+  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Put('avatar/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateAvatar(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    return await this.userService.updateUserAvatar(id, file);
+  }
+
+
+
   @Delete(':id')
+  @Roles(UserRoles.ADMIN)
   async delete(@Param('id') id: string) {
     return await this.userService.delete(id);
   }
+
 }

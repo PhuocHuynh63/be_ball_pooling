@@ -11,24 +11,32 @@ import { JwtAuthGuard } from './passport/jwt-auth.guard';
 import { RolesGuard } from './passport/roles.guard';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from '@modules/user/entities/user.schema';
+import { GoogleStrategy } from './passport/google.strategy';
+import { UploadService } from 'src/upload/upload.service';
+import { CloudinaryModule } from 'src/upload/cloudinary/cloudinary.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
     UserModule,
+    CloudinaryModule,
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), // <-- Add this!
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
+        global: true,
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED'),
-        },
+        signOptions: { expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED') },
       }),
       inject: [ConfigService],
     }),
     PassportModule,
+    MailModule,
   ],
   controllers: [AuthController, GoogleAuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService],
-  exports: [JwtAuthGuard, RolesGuard], 
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard, RolesGuard, GoogleAuthService, GoogleStrategy],
+  exports: [JwtAuthGuard, RolesGuard],
 })
-export class AuthModule {}
+export class AuthModule { }
