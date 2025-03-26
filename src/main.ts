@@ -6,10 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as passport from 'passport';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
-
-
   // const httpsOptions = {
   //   // pfx: fs.readFileSync('src/config/keystore.p12'),
 
@@ -46,6 +45,21 @@ async function bootstrap() {
     }
   );
 
+  //#region Microservices
+  const rabbitMQMicroservice = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    transport: Transport.RMQ,
+    options: {
+      urls: [configService.get<string>('RABBITMQ_URL')],
+      queue: 'pooltable.created',
+      queueOptions: { durable: false },
+    },
+  });
+
+  rabbitMQMicroservice.listen();
+  console.log('✅ RabbitMQ Microservice is running...');
+  //#endregion
+
+  //#region Swagger
   //ConfigSwagger
   const config = new DocumentBuilder()
     .setTitle('API PoolScoring')
@@ -64,6 +78,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/document', app, document);
+  //#endregion
 
   await app.listen(port);
 }

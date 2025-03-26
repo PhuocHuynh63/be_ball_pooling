@@ -18,6 +18,7 @@ import { GameModule } from './gateways/game.module';
 import { RedisModule } from './redis/redis.module';
 import Mail from 'nodemailer/lib/mailer';
 import { MailModule } from './mail/mail.module';
+import { RabbitmqModule } from './microservices/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { MailModule } from './mail/mail.module';
     GameModule,
     RedisModule,
     MailModule,
+    RabbitmqModule,
   ],
   controllers: [AppController],
   providers: [

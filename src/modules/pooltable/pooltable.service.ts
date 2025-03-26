@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PoolTable } from './entities/poolTable.schema';
@@ -7,13 +7,15 @@ import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
 import { UploadService } from 'src/upload/upload.service';
 import * as QRCode from 'qrcode';
 import { console } from 'node:inspector';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class PoolTableService {
   constructor(
     @InjectModel(PoolTable.name)
     private poolTableModel: Model<PoolTable>,
-    private readonly uploadService: UploadService
+    private readonly uploadService: UploadService,
+    @Inject('RABBITMQ_SERVICE') private readonly rabbitClient: ClientProxy,
   ) { }
 
   //#region create
@@ -46,9 +48,13 @@ export class PoolTableService {
       savedPoolTable.qrCodeImg = uploadResult;
       await savedPoolTable.save();
 
+
+      process.stdout.write(`📢 Đang gửi message: ${JSON.stringify({ id: savedPoolTable._id, store: payload.store })}`);
+
+      // **📢 Gửi thông báo qua RabbitMQ**
+      this.rabbitClient.emit('pooltable.created', { id: savedPoolTable._id, store: payload.store });
+
       return savedPoolTable;
-
-
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code
         throw new ConflictException('QR code already exists');
