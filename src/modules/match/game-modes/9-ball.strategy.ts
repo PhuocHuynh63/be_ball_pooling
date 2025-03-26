@@ -11,22 +11,22 @@
 //       }
 //     }
 
-    if (winner) {
-      match.result = {
-        name: '9-Ball Match Result',
-        score: 1, // Winner score
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-    } else {
-      match.result = {
-        name: '9-Ball Match Result',
-        score: 0, // No winner test
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-    }
-  }
+//     if (winner) {
+//       match.result = {
+//         name: '9-Ball Match Result',
+//         score: 1, // Winner score
+//         createdAt: new Date(),
+//         updatedAt: new Date(),
+//       };
+//     } else {
+//       match.result = {
+//         name: '9-Ball Match Result',
+//         score: 0, // No winner test
+//         createdAt: new Date(),
+//         updatedAt: new Date(),
+//       };
+//     }
+//   }
 
 
-// }
+// // }
