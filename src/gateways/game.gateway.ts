@@ -238,23 +238,44 @@ export class GameGateway implements OnGatewayConnection {
       }
     });
 
+    if (client.rooms.has(roomId)) {
+      return client.emit('roomJoined', { roomId, message: 'User already joined the room' });
+    }
+
     // Now join the intended room.
     client.join(roomId);
 
     if (client.data.userId) {
-      this.logger.debug(`Authenticated user ${client.data.userId} joined room ${roomId}`);
-      return { event: 'roomJoined', roomId, userType: 'account' };
+      // Retrieve user info for authenticated users
+      const user = await this.gameService.getUserInfo(client.data.userId);
+      this.logger.debug(`Authenticated user ${client.data.userId} (${user.name}) joined room ${roomId}`);
+      // Broadcast that the user joined with their name
+      this.server.in(roomId).emit('userJoined', {
+        roomId,
+        userType: 'account',
+        userName: user.name,
+        message: `${user.name} joined the room`
+      });
+      return client.emit('roomJoined', { roomId, userType: 'account', userName: user.name });
     } else {
+      // For guest users, using the provided guestName
       if (!payload.guestName) {
         throw new NotFoundException('Guest must provide a name to join the room');
       }
       const isGuest = await this.gameService.isGuestInRoom(payload.matchId, client.id);
       if (!isGuest) {
         await this.gameService.storeGuestInfo(payload.matchId, client.id, payload.guestName);
-        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId} and info stored in Redis.`);
-        return { event: 'roomJoined', roomId, userType: 'guest', guestName: payload.guestName };
+        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} joined room ${roomId}`);
+        this.server.in(roomId).emit('userJoined', {
+          roomId,
+          userType: 'guest',
+          guestName: payload.guestName,
+          message: `${payload.guestName} joined the room`,
+          socketId: client.id
+        });
+        return client.emit('roomJoined', { roomId, userType: 'guest', guestName: payload.guestName });
       } else {
-        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId} (already registered in Redis).`);
+        this.logger.debug(`Guest ${payload.guestName} socket ${client.id} rejoined room ${roomId}`);
         return client.emit('roomJoined', { roomId, userType: 'guest', guestName: payload.guestName, message: 'Guest already joined' });
       }
     }
