@@ -15,7 +15,6 @@ export class PoolTableConsumer {
 
     @EventPattern('pooltable.upload_qrcode')
     async handleUploadQrCode(payload: { id: string }) {
-        process.stdout.write(`📥 Đã nhận message từ queue: ${JSON.stringify(payload)}`);
         try {
             const poolTable = await this.poolTableService.findOne(payload.id);
 
@@ -35,8 +34,6 @@ export class PoolTableConsumer {
 
             // Cập nhật URL QR code vào database
             await this.poolTableService.update(payload.id, { qrCodeImg: uploadResult });
-
-            this.logger.log(`✅ QR code đã được upload cho bàn bi-a ID: ${payload.id}`);
         } catch (error) {
             this.logger.error(`❌ Upload QR code thất bại cho bàn bi-a ID: ${payload.id}`, error);
             throw error;

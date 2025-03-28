@@ -10,7 +10,6 @@ export class RabbitmqController {
 
   @EventPattern('pooltable.upload_qrcode')
   async handleUploadQRCode(data: { id: string }) {
-    this.logger.log(`📢 Nhận yêu cầu upload QR code: ${JSON.stringify(data)}`);
     await this.poolTableConsumer.handleUploadQrCode(data);
   }
 }

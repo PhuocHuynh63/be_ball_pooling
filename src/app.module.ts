@@ -20,6 +20,7 @@ import Mail from 'nodemailer/lib/mailer';
 import { MailModule } from './mail/mail.module';
 import { RabbitmqModule } from './microservices/rabbitmq/rabbitmq.module';
 import { MicroservicesModule } from './microservices/microservices.module';
+import { RabbitmqConsumerService } from './microservices/rabbitmq/rabbitmq.consumer.service';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { MicroservicesModule } from './microservices/microservices.module';
   controllers: [AppController],
   providers: [
     AppService,
+    RabbitmqConsumerService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

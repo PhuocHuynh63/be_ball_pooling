@@ -6,7 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as passport from 'passport';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { RabbitmqConsumerService } from './microservices/rabbitmq/rabbitmq.consumer.service';
 
 async function bootstrap() {
   // const httpsOptions = {
@@ -44,6 +44,11 @@ async function bootstrap() {
       credentials: true
     }
   );
+
+  //#region Microservices
+  const rabbitmqConsumerService = app.get(RabbitmqConsumerService);
+  await rabbitmqConsumerService.listen();
+  //#endregion
 
   //#region Swagger
   //ConfigSwagger
