@@ -6,10 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as passport from 'passport';
+import { RabbitmqConsumerService } from './microservices/rabbitmq/rabbitmq.consumer.service';
 
 async function bootstrap() {
-
-
   // const httpsOptions = {
   //   // pfx: fs.readFileSync('src/config/keystore.p12'),
 
@@ -46,6 +45,12 @@ async function bootstrap() {
     }
   );
 
+  //#region Microservices
+  const rabbitmqConsumerService = app.get(RabbitmqConsumerService);
+  await rabbitmqConsumerService.listen();
+  //#endregion
+
+  //#region Swagger
   //ConfigSwagger
   const config = new DocumentBuilder()
     .setTitle('API PoolScoring')
@@ -64,6 +69,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/document', app, document);
+  //#endregion
 
   await app.listen(port);
 }
