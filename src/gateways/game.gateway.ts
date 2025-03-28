@@ -410,4 +410,18 @@ export class GameGateway implements OnGatewayConnection {
     return client.emit('scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
   }
   //#endregion
+
+  @SubscribeMessage('pottedBall')
+  async handlePottedBall(
+    @MessageBody() payload: { matchId: string; ballType: 'stripe' | 'smooth' | 'eight'; ballIndex?: number },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomId = `match-${payload.matchId}`;
+
+    // Broadcast the potted ball value to all clients in the room.
+    this.server.in(roomId).emit('ballPottedUpdate', payload);
+
+    // Optionally, also send the event back to the emitter.
+    client.emit('ballPottedUpdate', payload);
+  }
 }
