@@ -19,6 +19,7 @@ import { RedisModule } from './redis/redis.module';
 import Mail from 'nodemailer/lib/mailer';
 import { MailModule } from './mail/mail.module';
 import { RabbitmqModule } from './microservices/rabbitmq/rabbitmq.module';
+import { MicroservicesModule } from './microservices/microservices.module';
 
 @Module({
   imports: [

@@ -20,39 +20,18 @@ export class PoolTableService {
 
   //#region create
   async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
-    const { ...payload } = createPoolTableDto;
+    const { store, ...payload } = createPoolTableDto;
     try {
       // Lưu bàn bi-a vào cơ sở dữ liệu
       const createdPoolTable = await this.poolTableModel.create({
         ...payload,
-        store: new Types.ObjectId(payload.store)
+        store: new Types.ObjectId(store)
       })
 
       const savedPoolTable = await createdPoolTable.save();
 
-      // Tạo mã QR từ ID của bàn bi-a
-      const qrCodeData = savedPoolTable._id;
-
-      const teamWaitingRoomUrl = `https://billiards-score-app.vercel.app/WaitingPage/${qrCodeData}`;
-
-      const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
-
-      // Lưu mã QR vào Cloudinary
-      const uploadResult = await this.uploadService.uploadImage({
-        buffer: Buffer.from(qrCodeImage.split(',')[1], 'base64'),
-        originalname: `${qrCodeData}-qrcode.png`,
-      } as Express.Multer.File, 'qrcodes');
-
-
-      // Cập nhật URL của mã QR vào cơ sở dữ liệu
-      savedPoolTable.qrCodeImg = uploadResult;
-      await savedPoolTable.save();
-
-
-      process.stdout.write(`📢 Đang gửi message: ${JSON.stringify({ id: savedPoolTable._id, store: payload.store })}`);
-
-      // **📢 Gửi thông báo qua RabbitMQ**
-      this.rabbitClient.emit('pooltable.created', { id: savedPoolTable._id, store: payload.store });
+      process.stdout.write(`📢 Đang gửi message: ${JSON.stringify({ id: savedPoolTable._id, store })}`);
+      this.rabbitClient.emit('pooltable.upload_qrcode', { id: savedPoolTable._id });
 
       return savedPoolTable;
     } catch (error) {

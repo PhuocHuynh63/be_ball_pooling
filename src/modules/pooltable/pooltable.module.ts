@@ -8,6 +8,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { UploadService } from 'src/upload/upload.service';
 import { CloudinaryModule } from 'src/upload/cloudinary/cloudinary.module';
 import { MicroservicesModule } from 'src/microservices/microservices.module';
+import { PoolTableConsumer } from './pooltable.consumer';
 
 @Module({
   imports: [
@@ -16,8 +17,8 @@ import { MicroservicesModule } from 'src/microservices/microservices.module';
     CloudinaryModule,
     MicroservicesModule,
   ],
-  providers: [PoolTableService, UploadService],
+  providers: [PoolTableService, UploadService, PoolTableConsumer],
   controllers: [PoolTableController],
-  exports: [PoolTableService],
+  exports: [PoolTableService, PoolTableConsumer],
 })
 export class PoolTableModule { }

@@ -50,12 +50,12 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: [configService.get<string>('RABBITMQ_URL')],
-      queue: 'pooltable.created',
+      queue: 'pooltable_queue',
       queueOptions: { durable: false },
     },
   });
 
-  rabbitMQMicroservice.listen();
+  await rabbitMQMicroservice.listen();
   console.log('✅ RabbitMQ Microservice is running...');
   //#endregion
 

@@ -14,7 +14,7 @@ import { Transport, ClientsModule } from '@nestjs/microservices';
                     transport: Transport.RMQ,
                     options: {
                         urls: [configService.get<string>('RABBITMQ_URL')],
-                        queue: 'pooltable.created',
+                        queue: 'pooltable_queue',
                         queueOptions: { durable: false },
                     },
                 }),
