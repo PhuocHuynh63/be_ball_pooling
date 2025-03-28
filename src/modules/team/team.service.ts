@@ -93,9 +93,15 @@ export class TeamService {
       throw new BadRequestException(`Invalid member id '${memberId}'`);
     }
 
-    const teams = await this.teamModel.find({ members: new Types.ObjectId(memberId) }).lean();
+    const teams = await this.teamModel
+      .find({ members: new Types.ObjectId(memberId) })
+      .populate({
+        path: 'match', // Populate thông tin của match
+        select: 'mode_game status createdAt updatedAt', // Chỉ lấy các trường cần thiết
+      })
+      .lean();
 
-    return teams
+    return teams;
   }
   //#endregion
 
