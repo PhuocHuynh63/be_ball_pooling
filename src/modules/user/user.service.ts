@@ -12,6 +12,7 @@ import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { FindUserDto } from './dto/user.dto';
 import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
 import { updateUsersDto } from './dto/update-user.dto ';
+import { get } from 'http';
 
 @Injectable()
 @UseGuards(RolesGuard)
@@ -19,6 +20,7 @@ export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly uploadService: UploadService,
+    private readonly mailService: MailService
   ) { }
 
   //#region createUser 
@@ -66,7 +68,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
+    
     if (updateUsers.authProvider === 'local' && updateUsers.passwordNew) {
       const isPasswordMatch = await comparePasswordHelper(updateUsers.password, user.password);
       if (isPasswordMatch) {

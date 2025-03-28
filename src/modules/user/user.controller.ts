@@ -51,7 +51,7 @@ export class UserController {
   @Roles(UserRoles.ADMIN)
   @Put('/admin/:id')
   @UseInterceptors(FileInterceptor('file'))
-  async updateAdmin(@Param('id') id: string, @Body() updateUsersDto: updateUsersAdminDto, @UploadedFile() file: Express.Multer.File) {
+  async updateAdmin(@Param('id') id: string, @Body() updateUsersDto: updateUsersAdminDto) {
     return await this.userService.updateUserAdmin(id, updateUsersDto);
   }
 
@@ -59,15 +59,8 @@ export class UserController {
   @Roles(UserRoles.USER)
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
-  async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto, @UploadedFile() file: Express.Multer.File) {
+  async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto) {
     return await this.userService.updateUser(id, updateUsersDto);
-  }
-
-  @Roles(UserRoles.USER)
-  @Put(':id')
-  @UseInterceptors(FileInterceptor('file'))
-  async updatePassword(@Param('id') id: string) {
-    return null;
   }
   //==========
 

@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsOptional } from "class-validator";
-import { UserRoles } from "src/constant/users.enums";
+
 
 
 export class updateUsersDto {
@@ -10,15 +10,6 @@ export class updateUsersDto {
         description: 'Name of the user',
     })
     name: string;
-
-    avatar: string;
-
-    @IsNotEmpty({ message: 'email is required' })
-    @ApiProperty({
-        example: 'thuan@example.com',
-        description: 'Email of the user',
-    })
-    email: string;
 
     @IsOptional()
     @ApiProperty({
@@ -33,14 +24,6 @@ export class updateUsersDto {
         description: 'password for update',
     })
     passwordNew: string;
-
-
-    @IsOptional()
-    @ApiProperty({
-        example: '123456',
-        description: 'OTP for the email',
-    })
-    otp: string;
 
     @IsOptional()
     @ApiProperty({
