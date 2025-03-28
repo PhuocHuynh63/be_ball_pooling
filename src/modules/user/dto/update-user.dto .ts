@@ -13,20 +13,6 @@ export class updateUsersDto {
 
     @IsOptional()
     @ApiProperty({
-        example: 'thuanpass123',
-        description: 'password for old',
-    })
-    password: string;
-
-    @IsOptional()
-    @ApiProperty({
-        example: 'thuanpass123',
-        description: 'password for update',
-    })
-    passwordNew: string;
-
-    @IsOptional()
-    @ApiProperty({
         example: '0986056438',
         description: 'user phone number',
     })
@@ -55,6 +41,27 @@ export class updateUsersDto {
 
 }
 
+export class ChangePasswordDto {
+    @IsOptional()
+    @ApiProperty({
+        example: 'thuanpass123',
+        description: 'password for old',
+    })
+    password: string;
 
+    @IsOptional()
+    @ApiProperty({
+        example: 'thuanpass123',
+        description: 'password for update',
+    })
+    newPassword: string;
+
+    @IsOptional()
+    @ApiProperty({
+        example: 'thuanpass123',
+        description: 'Confirm password for update',
+    })
+    confirmPassword: string;
+}
 
 

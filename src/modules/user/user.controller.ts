@@ -11,7 +11,7 @@ import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { Public, ResponseMessage } from 'src/decorator/custom';
 import { FindUserDto } from './dto/user.dto';
 import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
-import { updateUsersDto } from './dto/update-user.dto ';
+import { ChangePasswordDto, updateUsersDto } from './dto/update-user.dto ';
 
 
 @Controller('users')
@@ -72,6 +72,11 @@ export class UserController {
     return await this.userService.updateUserAvatar(id, file);
   }
 
+  @Put('change-password/:id')
+  @Roles(UserRoles.USER, UserRoles.ADMIN, UserRoles.MANAGER)
+  async changePassword(@Param('id') id: string, @Body() updateUsersDto: ChangePasswordDto) {
+    return await this.userService.changePassword(id, updateUsersDto);
+  }
 
 
   @Delete(':id')

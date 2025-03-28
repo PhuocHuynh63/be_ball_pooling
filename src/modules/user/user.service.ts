@@ -11,7 +11,7 @@ import { UploadService } from 'src/upload/upload.service';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { FindUserDto } from './dto/user.dto';
 import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
-import { updateUsersDto } from './dto/update-user.dto ';
+import { ChangePasswordDto, updateUsersDto } from './dto/update-user.dto ';
 import { get } from 'http';
 
 @Injectable()
@@ -68,22 +68,42 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    
-    if (updateUsers.authProvider === 'local' && updateUsers.passwordNew) {
-      const isPasswordMatch = await comparePasswordHelper(updateUsers.password, user.password);
-      if (isPasswordMatch) {
-        const hashedPassword = await hashPasswordHelper(updateUsers.passwordNew);
-        updateUsers.password = hashedPassword;
-      } else {
-        throw new BadRequestException('Current password is incorrect');
-      }
-      delete updateUsers.passwordNew; // Remove passwordNew from the update object
-    }
 
     Object.assign(user, updateUsers);
     return await user.save();
   }
-  //#endregionF
+  //#endregion
+
+  async changePassword(id: string, updateUsersDto: ChangePasswordDto) {
+    const { password, newPassword, confirmPassword } = updateUsersDto;
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if the old password is correct
+    const isMatch = await comparePasswordHelper(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    // Check if the new password and confirm password match
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('New password and confirm password do not match');
+    }
+
+    // Check if the new password is the same as the old password
+    if (password === newPassword) {
+      throw new BadRequestException('New password cannot be the same as old password');
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await hashPasswordHelper(newPassword);
+    user.password = hashedNewPassword;
+
+    // Save the updated user
+    return await user.save();
+  }
 
   //#region updateUserAvatar 
   async updateUserAvatar(id: string, file?: Express.Multer.File): Promise<User> {
