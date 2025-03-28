@@ -30,7 +30,6 @@ export class PoolTableService {
 
       const savedPoolTable = await createdPoolTable.save();
 
-      process.stdout.write(`📢 Đang gửi message: ${JSON.stringify({ id: savedPoolTable._id, store })}`);
       this.rabbitClient.emit('pooltable.upload_qrcode', { id: savedPoolTable._id });
 
       return savedPoolTable;

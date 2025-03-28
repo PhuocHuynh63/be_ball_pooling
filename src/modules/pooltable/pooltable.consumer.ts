@@ -39,6 +39,7 @@ export class PoolTableConsumer {
             this.logger.log(`✅ QR code đã được upload cho bàn bi-a ID: ${payload.id}`);
         } catch (error) {
             this.logger.error(`❌ Upload QR code thất bại cho bàn bi-a ID: ${payload.id}`, error);
+            throw error;
         }
     }
 }

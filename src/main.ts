@@ -45,20 +45,6 @@ async function bootstrap() {
     }
   );
 
-  //#region Microservices
-  const rabbitMQMicroservice = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.RMQ,
-    options: {
-      urls: [configService.get<string>('RABBITMQ_URL')],
-      queue: 'pooltable_queue',
-      queueOptions: { durable: false },
-    },
-  });
-
-  await rabbitMQMicroservice.listen();
-  console.log('✅ RabbitMQ Microservice is running...');
-  //#endregion
-
   //#region Swagger
   //ConfigSwagger
   const config = new DocumentBuilder()
