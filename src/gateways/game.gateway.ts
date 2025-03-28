@@ -55,13 +55,16 @@ export class GameGateway implements OnGatewayConnection {
         effectiveHostUserId,
       });
 
+      // Mark the client as host.
+      client.data.isHost = true;
+
       // If a guest creates the room, store guest info.
       if (!accountUserId) {
         await this.gameService.storeGuestInfo(match._id.toString(), client.id, payload.guestName);
       }
       client.join(roomId);
       this.logger.debug(`Socket ${client.id} joined room ${roomId}`);
-      client.emit('roomCreated', { roomId, matchId: match._id });
+      client.emit('roomCreated', { roomId, matchId: match._id, isHost: true });
     } catch (error) {
       // Emit an error event that the client can listen to.
       client.emit('roomCreateError', { message: error.message });
@@ -331,7 +334,7 @@ export class GameGateway implements OnGatewayConnection {
   //#region getWaitingRoomPlayers
   @SubscribeMessage('getWaitingRoomPlayers')
   async handleGetWaitingRoomPlayers(
-    @MessageBody() payload: { matchId: string },
+    @MessageBody() payload: { matchId: string; hostName?: string; hostImg?: string },
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const roomId = `match-${payload.matchId}`;
@@ -358,23 +361,34 @@ export class GameGateway implements OnGatewayConnection {
     // Combine both lists.
     const waitingPlayers = [...accountPlayers, ...guestPlayers];
 
+    const hostName = payload.hostName;
+    const hostImg = payload.hostImg;
+
     // Broadcast the combined list to everyone in the room.
-    this.server.in(roomId).emit('waitingRoomPlayers', { matchId: payload.matchId, players: waitingPlayers });
+    this.server.in(roomId).emit('waitingRoomPlayers', {
+      matchId: payload.matchId,
+      players: waitingPlayers,
+      hostName,
+      hostImg,
+    });
   }
   //#endregion
 
   //#region startMatch
-  @SubscribeMessage('startMatch')
-  async handleStartMatch(
-    @MessageBody() payload: { matchId: string },
+  @SubscribeMessage('startGame')
+  async handleStartGame(
+    @MessageBody() payload: { matchId: string; gameType: string },
+    @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const roomId = `match-${payload.matchId}`;
-    // Update the match status in the GameService.
-    await this.gameService.startMatch(payload.matchId);
-    // Broadcast to all sockets in the room.
-    this.server.in(roomId).emit('startMatch', { matchId: payload.matchId });
-    this.logger.debug(`Broadcasting startMatch to room ${roomId} and updated match status to 'ongoing'`);
-    return;
+    // Optionally, update any game state in your GameService with the gameType.
+    await this.gameService.startMatch(payload.matchId, payload.gameType);
+    // Broadcast the game start event with the game type to all clients in the room.
+    this.server.in(roomId).emit('startGame', { matchId: payload.matchId, gameType: payload.gameType });
+    this.logger.debug(`Broadcasting startGame for match ${payload.matchId} with gameType ${payload.gameType} to room ${roomId}`);
+
+    // Optionally, also send the event back to the sender.
+    client.emit('startGame', { matchId: payload.matchId, gameType: payload.gameType });
   }
   //#endregion
 
@@ -410,4 +424,18 @@ export class GameGateway implements OnGatewayConnection {
     return client.emit('scoreUpdated', { teamId: updatedTeam._id, newResult: updatedTeam.result });
   }
   //#endregion
+
+  @SubscribeMessage('pottedBall')
+  async handlePottedBall(
+    @MessageBody() payload: { matchId: string; ballType: 'stripe' | 'smooth' | 'eight'; ballIndex?: number },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomId = `match-${payload.matchId}`;
+
+    // Broadcast the potted ball value to all clients in the room.
+    this.server.in(roomId).emit('ballPottedUpdate', payload);
+
+    // Optionally, also send the event back to the emitter.
+    client.emit('ballPottedUpdate', payload);
+  }
 }

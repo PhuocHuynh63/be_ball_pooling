@@ -359,17 +359,18 @@ export class GameService {
   //#endregion
 
   //#region startMatch
-  async startMatch(matchId: string): Promise<any> {
-    const match = await this.matchModel.findById(matchId);
-    if (!match) {
-      throw new NotFoundException(`Match with id ${matchId} not found`);
-    }
-    match.status = 'ongoing';
-    await match.save();
-    this.logger.debug(`Match ${matchId} status updated to 'ongoing'`);
-    return match;
+async startMatch(matchId: string, gameType: string): Promise<any> {
+  const match = await this.matchModel.findById(matchId);
+  if (!match) {
+    throw new NotFoundException(`Match with id ${matchId} not found`);
   }
-  //#endregion
+  match.status = 'ongoing';
+  match.mode_game = gameType; // Update the match with the selected game mode.
+  await match.save();
+  this.logger.debug(`Match ${matchId} status updated to 'ongoing' with gametype: ${gameType}`);
+  return match;
+}
+//#endregion
 
   //#region endMatch
   async endMatch({ matchId, teamResults }:
