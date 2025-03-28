@@ -7,10 +7,12 @@ import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 import { UpdateAuthDto } from '../../auth/dto/update-auth.dto';
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
-import { updateUsersDto } from './dto/update-user.dto';
 import { UploadService } from 'src/upload/upload.service';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { FindUserDto } from './dto/user.dto';
+import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
+import { ChangePasswordDto, updateUsersDto } from './dto/update-user.dto ';
+import { get } from 'http';
 
 @Injectable()
 @UseGuards(RolesGuard)
@@ -18,6 +20,7 @@ export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly uploadService: UploadService,
+    private readonly mailService: MailService
   ) { }
 
   //#region createUser 
@@ -40,7 +43,25 @@ export class UserService {
   }
   //#endregion
 
-  //#region updateUser 
+  //#region updateUserAdmin  
+  async updateUserAdmin(id: string, updateUsers: updateUsersAdminDto): Promise<User> {
+
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (updateUsers.authProvider === 'local') {
+      const hashedPassword = await hashPasswordHelper(updateUsers.password);
+      updateUsers.password = hashedPassword;
+    }
+
+    Object.assign(user, updateUsers);
+    return await user.save();
+  }
+  //#endregion
+
+  //#region updateUser
   async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
 
     const user = await this.userModel.findById(id).exec();
@@ -52,6 +73,37 @@ export class UserService {
     return await user.save();
   }
   //#endregion
+
+  async changePassword(id: string, updateUsersDto: ChangePasswordDto) {
+    const { password, newPassword, confirmPassword } = updateUsersDto;
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if the old password is correct
+    const isMatch = await comparePasswordHelper(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    // Check if the new password and confirm password match
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('New password and confirm password do not match');
+    }
+
+    // Check if the new password is the same as the old password
+    if (password === newPassword) {
+      throw new BadRequestException('New password cannot be the same as old password');
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await hashPasswordHelper(newPassword);
+    user.password = hashedNewPassword;
+
+    // Save the updated user
+    return await user.save();
+  }
 
   //#region updateUserAvatar 
   async updateUserAvatar(id: string, file?: Express.Multer.File): Promise<User> {

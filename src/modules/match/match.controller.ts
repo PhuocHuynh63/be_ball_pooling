@@ -7,6 +7,7 @@ import { ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
+import { Public } from 'src/decorator/custom';
 
 @Controller('matches')
 @UseGuards(RolesGuard)
@@ -28,7 +29,7 @@ export class MatchController {
   }
 
   @Get(':id')
-  @Roles(UserRoles.ADMIN)
+  @Public()
   async findOne(@Param('id') id: string) {
     return this.matchService.findOne(id);
   }
@@ -40,7 +41,7 @@ export class MatchController {
   }
 
   @Put(':id')
-  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Public()
   async update(@Param('id') id: string, @Body() updateMatchDto: UpdateMatchDto) {
     return this.matchService.update(id, updateMatchDto);
   }
