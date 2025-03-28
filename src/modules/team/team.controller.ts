@@ -6,6 +6,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { Roles } from 'src/decorator/role.decorator';
 import { UserRoles } from 'src/constant/users.enums';
+import { Public } from 'src/decorator/custom';
 
 @Controller('teams')
 @UseGuards(RolesGuard)
@@ -39,7 +40,7 @@ export class TeamController {
   }
 
   @Get('/match/:id')
-  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Public()
   async getMatch(@Param('id') id: string) {
     return this.teamService.findTeamByMatch(id);
   }
