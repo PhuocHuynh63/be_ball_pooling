@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, NotFoundException, BadRequestException, Put, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
-import { updateUsersDto } from './dto/update-user.dto';
 import { request } from 'https';
 import { UploadService } from 'src/upload/upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -11,6 +10,8 @@ import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { Public, ResponseMessage } from 'src/decorator/custom';
 import { FindUserDto } from './dto/user.dto';
+import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
+import { updateUsersDto } from './dto/update-user.dto ';
 
 
 @Controller('users')
@@ -42,17 +43,34 @@ export class UserController {
   }
 
   @Get(':id')
-  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Public()
   async findId(@Param('id') id: string) {
     return await this.userService.findOne(id);
   }
 
-  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Roles(UserRoles.ADMIN)
+  @Put('/admin/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateAdmin(@Param('id') id: string, @Body() updateUsersDto: updateUsersAdminDto, @UploadedFile() file: Express.Multer.File) {
+    return await this.userService.updateUserAdmin(id, updateUsersDto);
+  }
+
+  //============
+  @Roles(UserRoles.USER)
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto, @UploadedFile() file: Express.Multer.File) {
     return await this.userService.updateUser(id, updateUsersDto);
   }
+
+  @Roles(UserRoles.USER)
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  async updatePassword(@Param('id') id: string) {
+    return null;
+  }
+  //==========
+
 
   @Roles(UserRoles.ADMIN, UserRoles.USER)
   @Put('avatar/:id')

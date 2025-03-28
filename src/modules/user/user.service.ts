@@ -7,10 +7,11 @@ import { CreateAuthDto } from '../../auth/dto/create-auth.dto';
 import { UpdateAuthDto } from '../../auth/dto/update-auth.dto';
 import { hashPasswordHelper, comparePasswordHelper } from 'src/utils/utils';
 import { MailService } from 'src/mail/mail.service';
-import { updateUsersDto } from './dto/update-user.dto';
 import { UploadService } from 'src/upload/upload.service';
 import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { FindUserDto } from './dto/user.dto';
+import { updateUsersAdminDto } from './dto/update-userAdmin.dto';
+import { updateUsersDto } from './dto/update-user.dto ';
 
 @Injectable()
 @UseGuards(RolesGuard)
@@ -40,7 +41,25 @@ export class UserService {
   }
   //#endregion
 
-  //#region updateUser 
+  //#region updateUserAdmin  
+  async updateUserAdmin(id: string, updateUsers: updateUsersAdminDto): Promise<User> {
+
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (updateUsers.authProvider === 'local') {
+      const hashedPassword = await hashPasswordHelper(updateUsers.password);
+      updateUsers.password = hashedPassword;
+    }
+
+    Object.assign(user, updateUsers);
+    return await user.save();
+  }
+  //#endregion
+
+  //#region updateUser
   async updateUser(id: string, updateUsers: updateUsersDto): Promise<User> {
 
     const user = await this.userModel.findById(id).exec();
@@ -48,10 +67,21 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
+    if (updateUsers.authProvider === 'local' && updateUsers.passwordNew) {
+      const isPasswordMatch = await comparePasswordHelper(updateUsers.password, user.password);
+      if (isPasswordMatch) {
+        const hashedPassword = await hashPasswordHelper(updateUsers.passwordNew);
+        updateUsers.password = hashedPassword;
+      } else {
+        throw new BadRequestException('Current password is incorrect');
+      }
+      delete updateUsers.passwordNew; // Remove passwordNew from the update object
+    }
+
     Object.assign(user, updateUsers);
     return await user.save();
   }
-  //#endregion
+  //#endregionF
 
   //#region updateUserAvatar 
   async updateUserAvatar(id: string, file?: Express.Multer.File): Promise<User> {
