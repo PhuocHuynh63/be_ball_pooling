@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PoolTable } from './entities/poolTable.schema';
@@ -7,48 +7,32 @@ import { UpdatePoolTableDto } from './dto/update-pooltable.dto';
 import { UploadService } from 'src/upload/upload.service';
 import * as QRCode from 'qrcode';
 import { console } from 'node:inspector';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class PoolTableService {
   constructor(
     @InjectModel(PoolTable.name)
     private poolTableModel: Model<PoolTable>,
-    private readonly uploadService: UploadService
+    private readonly uploadService: UploadService,
+    @Inject('RABBITMQ_SERVICE') private readonly rabbitClient: ClientProxy,
   ) { }
 
   //#region create
   async create(createPoolTableDto: CreatePoolTableDto): Promise<PoolTable> {
-    const { ...payload } = createPoolTableDto;
+    const { store, ...payload } = createPoolTableDto;
     try {
       // Lưu bàn bi-a vào cơ sở dữ liệu
       const createdPoolTable = await this.poolTableModel.create({
         ...payload,
-        store: new Types.ObjectId(payload.store)
+        store: new Types.ObjectId(store)
       })
 
       const savedPoolTable = await createdPoolTable.save();
 
-      // Tạo mã QR từ ID của bàn bi-a
-      const qrCodeData = savedPoolTable._id;
-
-      const teamWaitingRoomUrl = `https://billiards-score-app.vercel.app/WaitingPage/${qrCodeData}`;
-
-      const qrCodeImage = await QRCode.toDataURL(teamWaitingRoomUrl);
-
-      // Lưu mã QR vào Cloudinary
-      const uploadResult = await this.uploadService.uploadImage({
-        buffer: Buffer.from(qrCodeImage.split(',')[1], 'base64'),
-        originalname: `${qrCodeData}-qrcode.png`,
-      } as Express.Multer.File, 'qrcodes');
-
-
-      // Cập nhật URL của mã QR vào cơ sở dữ liệu
-      savedPoolTable.qrCodeImg = uploadResult;
-      await savedPoolTable.save();
+      this.rabbitClient.emit('pooltable.upload_qrcode', { id: savedPoolTable._id });
 
       return savedPoolTable;
-
-
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code
         throw new ConflictException('QR code already exists');

@@ -20,11 +20,17 @@ export class UpdatePoolTableDto {
     example: { type_name: 'Standard', compatible_mode: ['8-ball', '9-ball'] },
     description: 'Table type details for the pool table',
   })
-  tableType: {
+  tableType?: {
     type_name: string;
     compatible_mode: string[];
   };
 
+  @ApiProperty({
+    example: 'Standard',
+    description: 'Name of the pool table',
+  })
+  @IsOptional()
+  qrCodeImg?: string;
 
   @ApiProperty({
     example: '67966bd5d88c7fdb0809e3b8',
