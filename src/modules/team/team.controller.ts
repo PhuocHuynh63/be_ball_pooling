@@ -34,7 +34,7 @@ export class TeamController {
   }
 
   @Get('/match/member/:id')
-  @Roles(UserRoles.ADMIN, UserRoles.USER)
+  @Public()
   async getMatchByMember(@Param('id') id: string) {
     return this.teamService.findMatchByMember(id);
   }
