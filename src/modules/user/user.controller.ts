@@ -48,6 +48,12 @@ export class UserController {
     return await this.userService.findOne(id);
   }
 
+  @Get('/email/:email')
+  @Public()
+  async findEmail(@Param('email') email: string) {
+    return await this.userService.findEmail(email);
+  }
+
   @Roles(UserRoles.ADMIN)
   @Put('/admin/:id')
   @UseInterceptors(FileInterceptor('file'))
@@ -55,14 +61,12 @@ export class UserController {
     return await this.userService.updateUserAdmin(id, updateUsersDto);
   }
 
-  //============
   @Roles(UserRoles.USER)
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   async update(@Param('id') id: string, @Body() updateUsersDto: updateUsersDto) {
     return await this.userService.updateUser(id, updateUsersDto);
   }
-  //==========
 
 
   @Roles(UserRoles.ADMIN, UserRoles.USER)

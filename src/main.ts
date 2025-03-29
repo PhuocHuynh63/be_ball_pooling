@@ -9,19 +9,20 @@ import * as passport from 'passport';
 import { RabbitmqConsumerService } from './microservices/rabbitmq/rabbitmq.consumer.service';
 
 async function bootstrap() {
-  // const httpsOptions = {
-  //   // pfx: fs.readFileSync('src/config/keystore.p12'),
 
-  //   pfx: fs.readFileSync('dist/config/keystore.p12'),
-  //   passphrase: '123123123',
-  // };
+  const httpsOptions = {
+    // pfx: fs.readFileSync('src/config/keystore.p12'),
 
-  // const app = await NestFactory.create(AppModule, {
-  //   httpsOptions,
-  // });
+    pfx: fs.readFileSync('dist/config/keystore.p12'),
+    passphrase: '123123123',
+  };
+
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions,
+  });
 
 
-  const app = await NestFactory.create(AppModule);
+  // const app = await NestFactory.create(AppModule);
 
 
   app.use(passport.initialize());
