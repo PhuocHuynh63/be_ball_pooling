@@ -24,6 +24,7 @@ export class GameGateway implements OnGatewayConnection {
       try {
         const user = await this.jwtService.verifyAsync(token, { secret: process.env.JWT_SECRET });
         client.data.userId = user.sub;
+        client.data.userName = user.name;
         this.logger.debug(`Client connected: ${client.id}, user: ${user.sub}`);
       } catch (error) {
         this.logger.error(`Authentication error: ${error.message}`);
@@ -107,11 +108,10 @@ export class GameGateway implements OnGatewayConnection {
   async handleLeaveRoom(
     @MessageBody() payload: { matchId: string },
     @ConnectedSocket() client: Socket,
-  ) {
+  ): Promise<void> {
     const userId = client.data.userId;
     const roomId = `match-${payload.matchId}`;
 
-    // For authenticated users, remove them from their teams in the match.
     if (userId) {
       await this.gameService.leaveMatch({ matchId: payload.matchId, userId });
     } else {
@@ -120,9 +120,28 @@ export class GameGateway implements OnGatewayConnection {
       this.logger.debug(`Guest socket ${client.id} removed from Redis for match ${actualMatchId}`);
     }
 
+    // Prepare display name.
+    let leavingName = '';
+    if (userId) {
+      // Use the stored name from the socket's data (set during authentication).
+      leavingName = client.data.userName;
+    } else {
+      // For guests, assume you stored their name during room join (e.g., in client.data.guestName).
+      leavingName = client.data.guestName || `Guest ${client.id}`;
+    }
+
+    // Broadcast to all clients in the room that this user has left BEFORE leaving the room.
+    this.server.in(roomId).emit('userLeft', {
+      roomId,
+      userId: userId || client.id,
+      message: `${leavingName} has left the room`
+    });
+
     client.leave(roomId);
     this.logger.debug(`Socket ${client.id} left room ${roomId}`);
-    return client.emit('roomLeft', { roomId });
+
+    client.emit('roomLeft', { roomId });
+    return;
   }
   //#endregion
 

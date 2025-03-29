@@ -48,7 +48,7 @@ export class GameService {
     } catch (error) {
       throw new NotFoundException(`Pool table with id ${payload.pooltable} not found`);
     }
-  
+
     // Check if the pool table is already in an active match.
     const activeMatch = await this.matchModel.findOne({
       pooltable: payload.pooltable,
@@ -57,16 +57,16 @@ export class GameService {
     if (activeMatch) {
       throw new ConflictException(`Pool table ${payload.pooltable} is already used in an active match (id: ${activeMatch._id}).`);
     }
-  
+
     let roomId: string;
     let match;
-  
+
     // If matchId provided, try to find match.
     if (payload.matchId) {
       match = await this.matchModel.findById(payload.matchId);
       this.logger.debug("Found match with provided matchId:", match);
     }
-  
+
     // If no match, create one.
     if (!match) {
       const hostType = payload.effectiveHostUserId ? 'account' : 'guest';
@@ -77,9 +77,9 @@ export class GameService {
       });
       await match.save();
       this.logger.debug("New match created:", match);
-  
+
       roomId = `match-${match._id}`;
-  
+
       // Create Team 1, using ObjectId for account hosts or storing guestName.
       const team1 = new this.teamModel({
         teamName: "Team 1",
@@ -90,7 +90,7 @@ export class GameService {
       });
       await team1.save();
       this.logger.debug("New team created (Team 1):", team1);
-  
+
       // Create Team 2 as an empty team.
       const team2 = new this.teamModel({
         teamName: "Team 2",
@@ -359,18 +359,18 @@ export class GameService {
   //#endregion
 
   //#region startMatch
-async startMatch(matchId: string, gameType: string): Promise<any> {
-  const match = await this.matchModel.findById(matchId);
-  if (!match) {
-    throw new NotFoundException(`Match with id ${matchId} not found`);
+  async startMatch(matchId: string, gameType: string): Promise<any> {
+    const match = await this.matchModel.findById(matchId);
+    if (!match) {
+      throw new NotFoundException(`Match with id ${matchId} not found`);
+    }
+    match.status = 'ongoing';
+    match.mode_game = gameType; // Update the match with the selected game mode.
+    await match.save();
+    this.logger.debug(`Match ${matchId} status updated to 'ongoing' with gametype: ${gameType}`);
+    return match;
   }
-  match.status = 'ongoing';
-  match.mode_game = gameType; // Update the match with the selected game mode.
-  await match.save();
-  this.logger.debug(`Match ${matchId} status updated to 'ongoing' with gametype: ${gameType}`);
-  return match;
-}
-//#endregion
+  //#endregion
 
   //#region endMatch
   async endMatch({ matchId, teamResults }:
@@ -424,6 +424,20 @@ async startMatch(matchId: string, gameType: string): Promise<any> {
 
   //#region leaveMatch
   async leaveMatch({ matchId, userId }: { matchId: string; userId: string }): Promise<void> {
+    // Find the match
+    const match = await this.matchModel.findById(matchId);
+    if (!match) {
+      throw new NotFoundException(`Match with id ${matchId} not found`);
+    }
+
+    // Only allow leaving match if it's still pending.
+    if (match.status !== 'pending') {
+      this.logger.debug(`User ${userId} cannot leave match ${matchId} because its status is ${match.status}`);
+      // Optionally, throw an error:
+      // throw new ConflictException(`Cannot leave match ${matchId} once it has started or finished`);
+      return;
+    }
+
     // Remove the user from all teams associated with the match.
     await this.teamModel.updateMany(
       { match: new Types.ObjectId(matchId), members: { $in: [new Types.ObjectId(userId)] } },
