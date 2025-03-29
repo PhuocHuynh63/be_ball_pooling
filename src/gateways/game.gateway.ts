@@ -419,11 +419,14 @@ export class GameGateway implements OnGatewayConnection {
       teamResults: Array<{ teamId: string; result: { score: number; foulCount: number; strokes: number } }>;
     },
     @ConnectedSocket() client: Socket,
+
   ) {
+    const roomId = `match-${payload.matchId}`;
     this.logger.debug("endMatch payload:", payload);
     const response = await this.gameService.endMatch({ matchId: payload.matchId, teamResults: payload.teamResults });
     client.to(`match-${payload.matchId}`).emit('matchEnded', { matchId: payload.matchId, teamResults: response.teamResults });
     this.logger.debug(`Broadcasting matchEnded to room match-${payload.matchId}`);
+    this.server.in(roomId).emit('matchEnded', { matchId: payload.matchId, teamResults: response.teamResults });
     return client.emit('matchEnded', { matchId: payload.matchId, teamResults: response.teamResults });
   }
   //#endregion
@@ -444,6 +447,7 @@ export class GameGateway implements OnGatewayConnection {
   }
   //#endregion
 
+  //#region pottedBall
   @SubscribeMessage('pottedBall')
   async handlePottedBall(
     @MessageBody() payload: { matchId: string; ballType: 'stripe' | 'smooth' | 'eight'; ballIndex?: number },
@@ -457,4 +461,50 @@ export class GameGateway implements OnGatewayConnection {
     // Optionally, also send the event back to the emitter.
     client.emit('ballPottedUpdate', payload);
   }
+  //#endregion
+
+  //#region endTurn
+  //#region endTurn
+  @SubscribeMessage('endTurn')
+  async handleEndTurn(
+    @MessageBody() payload: { matchId: string; nextTurn?: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomId = `match-${payload.matchId}`;
+    // Broadcast the end turn event to all clients in the room.
+    this.server.in(roomId).emit('turnEnded', {
+      matchId: payload.matchId,
+      nextTurn: payload.nextTurn, // Optionally indicate the next player's identifier.
+      message: `Turn ended.`
+    });
+    // Also notify the sender.
+    client.emit('turnEnded', {
+      matchId: payload.matchId,
+      nextTurn: payload.nextTurn,
+      message: `Turn ended.`
+    });
+  }
+  //#endregion
+
+  //#region pauseGame
+  @SubscribeMessage('pauseGame')
+  async handlePauseGame(
+    @MessageBody() payload: { matchId: string; pause: boolean },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomId = `match-${payload.matchId}`;
+    // Broadcast the pause (or resume) state to all clients in the room.
+    this.server.in(roomId).emit('gamePaused', {
+      matchId: payload.matchId,
+      pause: payload.pause,
+      message: payload.pause ? 'Game has been paused.' : 'Game resumed.'
+    });
+    // Optionally, notify the sender as well.
+    client.emit('gamePaused', {
+      matchId: payload.matchId,
+      pause: payload.pause,
+      message: payload.pause ? 'Game has been paused.' : 'Game resumed.'
+    });
+  }
+  //#endregion
 }
